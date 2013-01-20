@@ -3,7 +3,7 @@ define(function(require) {
 	var forOwn = require('mout/object/forOwn');
 	var merge = require('mout/object/merge');
 	var toArray = require('mout/lang/toArray');
-	var waterfall = require('deferreds/waterfall');
+	var pipe = require('deferreds/pipe');
 
 
 	var makeChains = function(constructor) {
@@ -43,7 +43,7 @@ define(function(require) {
 					methods.unshift(args);
 				}
 
-				return waterfall(methods);
+				return pipe(methods);
 			};
 		});
 	};
