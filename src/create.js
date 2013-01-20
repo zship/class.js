@@ -5,12 +5,12 @@ define(function(require) {
 	var makeConstructor = require('./makeConstructor');
 	var forceNew = require('./util/forceNew');
 	var defaults = require('./util/defaults');
-	var guessClassName = require('plugin/guessClassName');
-	var makeSuper = require('plugin/makeSuper');
-	var makeClone = require('plugin/makeClone');
-	var makeApply = require('plugin/makeApply');
-	var makeChains = require('plugin/makeChains');
-	var makeProps = require('plugin/makeProps');
+	var guessClassName = require('./plugin/guessClassName');
+	var makeSuper = require('./plugin/makeSuper');
+	var makeClone = require('./plugin/makeClone');
+	var makeApply = require('./plugin/makeApply');
+	var makeChains = require('./plugin/makeChains');
+	var makeProps = require('./plugin/makeProps');
 
 
 	var ctorFn = function(meta) {
