@@ -1,10 +1,12 @@
 define(function(require) {
 
+	'use strict';
+
 	var toArray = require('mout/lang/toArray');
 	var isString = require('mout/lang/isString');
 	var forOwn = require('mout/object/forOwn');
-	var methodResolutionOrder = require('./methodResolutionOrder');
-	var makeConstructor = require('./makeConstructor');
+	var methodResolutionOrder = require('./util/methodResolutionOrder');
+	var makeConstructor = require('./util/makeConstructor');
 
 
 	/**

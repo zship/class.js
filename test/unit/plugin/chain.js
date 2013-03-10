@@ -1,10 +1,12 @@
 define(function(require){
 
+	'use strict';
+
 	var create = require('create');
 	var Deferred = require('deferreds/Deferred');
 
 
-	module('plugin/makeChains');
+	module('plugin/chain');
 
 
 	asyncTest('Chaining and Deferreds', function() {

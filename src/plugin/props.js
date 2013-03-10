@@ -1,5 +1,7 @@
 define(function(require) {
 
+	'use strict';
+
 	var forOwn = require('mout/object/forOwn');
 	var isObject = require('mout/lang/isObject');
 	var merge = require('mout/object/merge');
@@ -63,7 +65,8 @@ define(function(require) {
 				}
 			});
 
-		//if they don't exist, make placeholders for parents of nested properties
+		//if they don't exist, make placeholders for parents of nested
+		//properties
 		Object.keys(meta.descriptors)
 			.filter(function(key) {
 				return key.search(/\./) !== -1;

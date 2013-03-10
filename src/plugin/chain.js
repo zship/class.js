@@ -1,5 +1,7 @@
 define(function(require) {
 
+	'use strict';
+
 	var forOwn = require('mout/object/forOwn');
 	var merge = require('mout/object/merge');
 	var toArray = require('mout/lang/toArray');

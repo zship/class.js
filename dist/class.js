@@ -557,6 +557,8 @@ define('mout/object/forOwn',['./hasOwn', './forIn'], function (hasOwn, forIn) {
 
 define('methodResolutionOrder',[],function() {
 
+	
+
 	var _merge = function(seqs) {
 		var result = [];
 
@@ -632,10 +634,16 @@ define('methodResolutionOrder',[],function() {
 
 define('makeConstructor',['require','mout/object/forOwn'],function(require) {
 
+	
+
 	var forOwn = require('mout/object/forOwn');
 
 
 	var makeConstructor = function(fn, proto, meta) {
+		//proto.constructor is about to be overwritten. if plugins modified it,
+		//save that modification in meta.ctor.
+		meta.ctor = proto.constructor;
+
 		var constructor = fn || function() {};
 		constructor._meta = meta;
 		constructor.prototype = proto;
@@ -653,7 +661,9 @@ define('makeConstructor',['require','mout/object/forOwn'],function(require) {
 
 });
 
-define('base',['require','mout/lang/toArray','mout/lang/isString','mout/object/forOwn','./methodResolutionOrder','./makeConstructor'],function(require) {
+define('basicCreate',['require','mout/lang/toArray','mout/lang/isString','mout/object/forOwn','./methodResolutionOrder','./makeConstructor'],function(require) {
+
+	
 
 	var toArray = require('mout/lang/toArray');
 	var isString = require('mout/lang/isString');
@@ -791,23 +801,24 @@ define('base',['require','mout/lang/toArray','mout/lang/isString','mout/object/f
 
 });
 
+/*jshint evil:true, strict:false*/
 define('util/forceNew',[],function() {
 
 	//return a new object that inherits from ctor.prototype but without
 	//actually running ctor on the object.
 	var forceNew = function(ctor) {
 		//create object with correct prototype using a do-nothing constructor
-		var xtor;
+		var Xtor;
 		if (ctor._meta && ctor._meta.name) {
 			//override constructor name given in common debuggers
-			xtor = eval('1&&function ' + ctor._meta.name + '(){}');
+			Xtor = eval('1&&function ' + ctor._meta.name + '(){}');
 		}
 		else {
-			xtor = function() {};
+			Xtor = function() {};
 		}
-		xtor.prototype = ctor.prototype;
-		var instance = new xtor();
-		xtor.prototype = null;
+		Xtor.prototype = ctor.prototype;
+		var instance = new Xtor();
+		Xtor.prototype = null;
 		return instance;
 	};
 
@@ -879,13 +890,15 @@ define('mout/lang/isObject',['./isKind'], function (isKind) {
 
 define('util/isElement',[],function() {
 
+	
+
 	/**
 	 * Determine if an object is a jQuery element or a DOM element.
 	 * @param {Any} obj
 	 * @return {Boolean}
 	 */
 	var isElement = function(obj) {
-		if (!obj || typeof obj !== "object") {
+		if (!obj || typeof obj !== 'object') {
 			return false;
 		}
 
@@ -893,7 +906,7 @@ define('util/isElement',[],function() {
 		if (obj[0]) { //possible jQuery object
 			el = obj[0];
 		}
-		return typeof el === "object" && typeof el.nodeType === "number" && typeof el.nodeName==="string";
+		return typeof el === 'object' && typeof el.nodeType === 'number' && typeof el.nodeName==='string';
 	};
 
 
@@ -902,6 +915,8 @@ define('util/isElement',[],function() {
 });
 
 define('util/defaults',['require','mout/collection/forEach','mout/lang/isObject','./isElement'],function(require) {
+
+	
 
 	var forEach = require('mout/collection/forEach');
 	var isObject = require('mout/lang/isObject');
@@ -944,314 +959,6 @@ define('util/defaults',['require','mout/collection/forEach','mout/lang/isObject'
 
 });
 
-define('plugin/guessClassName',[],function() {
-
-	var _hashCode = function(str){
-		var hash = 0;
-
-		if (str.length === 0) {
-			return hash;
-		}
-
-		for (var i = 0; i < str.length; i++) {
-			var char = str.charCodeAt(i);
-			hash = ((hash<<5)-hash)+char;
-			hash = hash & hash; // Convert to 32bit integer
-		}
-
-		return hash.toString();
-	};
-
-
-	var count = {};
-	var lastMatches = {};
-	var lastCaller;
-
-
-	/*
-	 * Convention: if the result of the call to create() or extend() is
-	 * assigned to a variable, we use that name as the class name
-	 */
-	var guessClassName = function(constructor) {
-		var meta = constructor._meta;
-
-		var caller = guessClassName.caller.caller;
-		lastCaller = lastCaller || caller;
-
-		var changedScope = true;
-		var curr = caller;
-		for (var i = 0; i < 10; i++) {
-			if (curr === lastCaller) {
-				changedScope = false;
-				break;
-			}
-			if (curr.caller === null) {
-				break;
-			}
-			curr = curr.caller;
-		}
-
-		//when we move out of scope of a group of classes, we can delete our
-		//caches pertaining to them
-		if (changedScope) {
-			count = {};
-			lastMatches = {};
-			lastCaller = caller;
-		}
-
-		var sCaller = caller.toString();
-
-		//store count of class declarations we have already processed in `caller`'s
-		//scope. We'll keep looking until we've exceeded this count in `hits` below.
-		var hash = _hashCode(sCaller);
-		count[hash] = count[hash] || 0;
-		lastMatches[hash] = lastMatches[hash] || [];
-
-		//mark an explicitly-named class, and increment the count of guessed
-		//class names (guessClassName holds a good bit of state, so it's for
-		//the next invocation)
-		if (meta.name) {
-			count[hash]++;
-			lastMatches[hash][count[hash]] = '';
-			return;
-		}
-
-		var superclassName = '';
-		if (meta.bases && meta.bases.length) {
-			superclassName = meta.bases[0]._meta.name;
-		}
-
-		//e.g. var (name) = create({...
-		var rClassCreate = /^\s*?(?:var)?\s*?(\S+?)\s*?=\s*?create/;
-		//e.g. var (name) = (Superclass).extend({...
-		var rClassExtend = /^\s*?(?:var)?\s*?(\S+?)\s*?=\s*?(\S+?)\.extend/;
-
-		var lines = sCaller.split(/\n/);
-		var hits = 0;
-		for (var j = 0; j < lines.length; j++) {
-			var line = lines[j];
-
-			if (line === lastMatches[hash][hits]) {
-				hits++;
-				continue;
-			}
-
-			var matches = line.match(rClassCreate);
-
-			if (!matches) {
-				matches = line.match(rClassExtend);
-				//it's an extend() match, but not with the superclass name
-				//we're looking for (extend is a somewhat common function name,
-				//so we're being precise with this match)
-				if (matches && matches[2] !== superclassName) {
-					matches = false;
-				}
-			}
-
-			if (!matches) {
-				continue;
-			}
-
-			hits++;
-
-			//discard matches we've already assigned to classes (returned from
-			//this method)
-			if (hits <= count[hash]) {
-				continue;
-			}
-
-			meta.name = matches[1];
-			lastMatches[hash][count[hash]] = line;
-			count[hash]++;
-			return;
-		}
-	};
-
-
-	return guessClassName;
-
-});
-
-define('mout/lang/isFunction',['./isKind'], function (isKind) {
-    /**
-     */
-    function isFunction(val) {
-        return isKind(val, 'Function');
-    }
-    return isFunction;
-});
-
-define('plugin/makeSuper',['require','mout/object/forOwn','mout/lang/isFunction'],function(require) {
-
-	var forOwn = require('mout/object/forOwn');
-	var isFunction = require('mout/lang/isFunction');
-
-
-	var superMethod = function() {
-		//keep a pointer to which base class we're operating on, so that
-		//upstream _super calls are directed to methods higher in the chain
-		this._superPointer = this._superPointer || 0;
-		this._superPointer++;
-
-		var key = superMethod.caller.nom;
-		var cache = this.constructor._meta.superCache;
-		var superFn = cache[key] && cache[key][this._superPointer - 1];
-
-		if (!superFn) {
-			var className = this.constructor._meta.name;
-			var err = className + '#' + key + ': no method by this name in superclasses (';
-			err += [className].concat(
-				this.constructor._meta.bases.map(function(base) {
-					return base._meta.name;
-				})
-			).join(' > ');
-			err += ')';
-			throw new Error(err);
-		}
-
-		var ret = superFn.apply(this, arguments);
-		this._superPointer = 0;
-		return ret;
-	};
-
-
-	var makeSuper = function(constructor) {
-		var meta = constructor._meta;
-		var proto = constructor.prototype;
-
-		forOwn(proto, function(prop, key) {
-			if (isFunction(prop)) {
-				prop.nom = key;
-			}
-		});
-
-		//cache of which base methods should be used for each _super method,
-		//and in what order
-		meta.superCache = {};
-
-		forOwn(meta.members, function(member, key) {
-			meta.superCache[key] = [];
-			meta.bases.forEach(function(base) {
-				if (!base._meta.members.hasOwnProperty(key)) {
-					return;
-				}
-
-				var fn = base._meta.members[key];
-
-				if (!fn) {
-					return;
-				}
-
-				meta.superCache[key].push(fn);
-			});
-		});
-
-		proto._super = superMethod;
-	};
-
-
-	return makeSuper;
-
-});
-
-define('plugin/makeClone',['require','../util/forceNew','../util/isElement','mout/object/forOwn','mout/lang/kindOf','mout/lang/isFunction'],function(require) {
-
-	var forceNew = require('../util/forceNew');
-	var isElement = require('../util/isElement');
-	var forOwn = require('mout/object/forOwn');
-	var kindOf = require('mout/lang/kindOf');
-	var isFunction = require('mout/lang/isFunction');
-
-
-	//modified from mout's lang/clone
-	function clone(val){
-		var result;
-
-		//don't clone DOM nodes (or jquery objects)
-		if (isElement(val)) {
-			result = val;
-			return result;
-		}
-
-		switch ( kindOf(val) ) {
-			case 'Object':
-				result = cloneObject(val);
-				break;
-			case 'Array':
-				result = cloneArray(val);
-				break;
-			case 'RegExp':
-				result = cloneRegExp(val);
-				break;
-			case 'Date':
-				result = cloneDate(val);
-				break;
-			default:
-				result = val;
-		}
-
-		return result;
-	}
-
-
-	function cloneObject(source) {
-		//object with a clone() method: respect its clone method
-		//(should return a true instance of something, rather than a
-		//plain object like cloneObject)
-		if (source.clone && isFunction(source.clone)) {
-			return source.clone();
-		}
-
-		var out = {};
-		forOwn(source, function(val, key) {
-			out[key] = clone(val);
-		});
-		return out;
-	}
-
-
-	function cloneRegExp(r){
-		var flags = '';
-		flags += r.multiline ? 'm' : '';
-		flags += r.global ? 'g' : '';
-		flags += r.ignoreCase ? 'i' : '';
-		return new RegExp(r.source, flags);
-	}
-
-
-	function cloneDate(date){
-		return new Date( date.getTime() );
-	}
-
-
-	function cloneArray(arr){
-		var out = [];
-		var i = -1;
-		var n = arr.length;
-		while (++i < n) {
-			out[i] = clone(arr[i]);
-		}
-		return out;
-	}
-
-
-	var makeClone = function(constructor) {
-		var proto = constructor.prototype;
-
-		proto.clone = function() {
-			var ret = forceNew(this.constructor);
-			forOwn(this, function(val, key) {
-				ret[key] = clone(val);
-			});
-			return ret;
-		};
-	};
-
-
-	return makeClone;
-
-});
-
 define('mout/object/filter',['./forOwn'], function(forOwn) {
 
     /**
@@ -1271,7 +978,9 @@ define('mout/object/filter',['./forOwn'], function(forOwn) {
     return filterValues;
 });
 
-define('plugin/makeApply',['require','mout/object/forOwn','mout/object/filter'],function(require) {
+define('plugin/apply',['require','mout/object/forOwn','mout/object/filter'],function(require) {
+
+	
 
 	var forOwn = require('mout/object/forOwn');
 	var filter = require('mout/object/filter');
@@ -1323,30 +1032,97 @@ define('mout/lang/isPlainObject',[],function () {
 
 });
 
-define('mout/lang/deepClone',['../object/forOwn', './kindOf', './isPlainObject'], function (forOwn, kindOf, isPlainObject) {
+define('mout/object/mixIn',['./forOwn'], function(forOwn){
+
+    /**
+    * Combine properties from all the objects into first one.
+    * - This method affects target object in place, if you want to create a new Object pass an empty object as first param.
+    * @param {object} target    Target Object
+    * @param {...object} objects    Objects to be combined (0...n objects).
+    * @return {object} Target Object.
+    */
+    function mixIn(target, objects){
+        var i = 0,
+            n = arguments.length,
+            obj;
+        while(++i < n){
+            obj = arguments[i];
+            if (obj != null) {
+                forOwn(obj, copyProp, target);
+            }
+        }
+        return target;
+    }
+
+    function copyProp(val, key){
+        this[key] = val;
+    }
+
+    return mixIn;
+});
+
+define('mout/lang/clone',['./kindOf', './isPlainObject', '../object/mixIn'], function (kindOf, isPlainObject, mixIn) {
 
     /**
      * Clone native types.
      */
+    function clone(val){
+        switch (kindOf(val)) {
+            case 'Object':
+                return cloneObject(val);
+            case 'Array':
+                return cloneArray(val);
+            case 'RegExp':
+                return cloneRegExp(val);
+            case 'Date':
+                return cloneDate(val);
+            default:
+                return val;
+        }
+    }
+
+    function cloneObject(source) {
+        if (isPlainObject(source)) {
+            return mixIn({}, source);
+        } else {
+            return source;
+        }
+    }
+
+    function cloneRegExp(r) {
+        var flags = '';
+        flags += r.multiline ? 'm' : '';
+        flags += r.global ? 'g' : '';
+        flags += r.ignorecase ? 'i' : '';
+        return new RegExp(r.source, flags);
+    }
+
+    function cloneDate(date) {
+        return new Date(+date);
+    }
+
+    function cloneArray(arr) {
+        return arr.slice();
+    }
+
+    return clone;
+
+});
+
+define('mout/lang/deepClone',['./clone', '../object/forOwn', './kindOf', './isPlainObject'], function (clone, forOwn, kindOf, isPlainObject) {
+
+    /**
+     * Recursively clone native types.
+     */
     function deepClone(val, instanceClone) {
-        var result;
         switch ( kindOf(val) ) {
             case 'Object':
-                result = cloneObject(val, instanceClone);
-                break;
+                return cloneObject(val, instanceClone);
             case 'Array':
-                result = cloneArray(val, instanceClone);
-                break;
-            case 'RegExp':
-                result = cloneRegExp(val);
-                break;
-            case 'Date':
-                result = cloneDate(val);
-                break;
+                return cloneArray(val, instanceClone);
             default:
-                result = val;
+                return clone(val);
         }
-        return result;
     }
 
     function cloneObject(source, instanceClone) {
@@ -1361,18 +1137,6 @@ define('mout/lang/deepClone',['../object/forOwn', './kindOf', './isPlainObject']
         } else {
             return source;
         }
-    }
-
-    function cloneRegExp(r) {
-        var flags = '';
-        flags += r.multiline? 'm' : '';
-        flags += r.global? 'g' : '';
-        flags += r.ignoreCase? 'i' : '';
-        return new RegExp(r.source, flags);
-    }
-
-    function cloneDate(date) {
-        return new Date( date.getTime() );
     }
 
     function cloneArray(arr, instanceClone) {
@@ -1489,35 +1253,6 @@ define('mout/function/bind',[],function(){
 });
 
 
-define('mout/object/mixIn',['./forOwn'], function(forOwn){
-
-    /**
-    * Combine properties from all the objects into first one.
-    * - This method affects target object in place, if you want to create a new Object pass an empty object as first param.
-    * @param {object} target    Target Object
-    * @param {...object} objects    Objects to be combined (0...n objects).
-    * @return {object} Target Object.
-    */
-    function mixIn(target, objects){
-        var i = 0,
-            n = arguments.length,
-            obj;
-        while(++i < n){
-            obj = arguments[i];
-            if (obj != null) {
-                forOwn(obj, copyProp, target);
-            }
-        }
-        return target;
-    }
-
-    function copyProp(val, key){
-        this[key] = val;
-    }
-
-    return mixIn;
-});
-
 define('deferreds/isDeferred',[],function() {
 
 	var isDeferred = function(obj) {
@@ -1553,7 +1288,7 @@ define('deferreds/Promise',['require','mout/object/mixIn'],function(require) {
 	};
 
 
-	mixin(Promise.prototype, {
+	mixin(Promise.prototype, /** @lends Promise.prototype */ {
 
 		/**
 		 * @return {Deferred.State}
@@ -1676,7 +1411,7 @@ define('deferreds/Deferred',['require','./forceNew','mout/lang/isArray','mout/la
 	};
 
 
-	mixin(Deferred.prototype, {
+	mixin(Deferred.prototype, /** @lends Deferred.prototype */ {
 
 		/**
 		 * @return {Promise}
@@ -1856,7 +1591,7 @@ define('deferreds/Deferred',['require','./forceNew','mout/lang/isArray','mout/la
 
 });
 
-define('mout/function/curry',[],function () {
+define('mout/function/partial',[],function () {
 
     function slice(arr, offset){
         return Array.prototype.slice.call(arr, offset || 0);
@@ -1865,15 +1600,24 @@ define('mout/function/curry',[],function () {
     /**
      * Creates a partially applied function.
      */
-    function curry(fn, var_args){
+    function partial(fn, var_args){
         var argsArr = slice(arguments, 1); //curried args
         return function(){
             return fn.apply(this, argsArr.concat(slice(arguments)));
         };
     }
 
-    return curry;
+    return partial;
 
+});
+
+define('mout/lang/isFunction',['./isKind'], function (isKind) {
+    /**
+     */
+    function isFunction(val) {
+        return isKind(val, 'Function');
+    }
+    return isFunction;
 });
 
 define('deferreds/anyToDeferred',['require','./Deferred','mout/lang/isFunction','./isDeferred','./isPromise'],function(require) {
@@ -1960,12 +1704,12 @@ define('mout/collection/size',['../lang/isArray', '../object/size'], function (i
 
 });
 
-define('deferreds/waterfall',['require','./Deferred','mout/lang/isArray','mout/lang/toArray','mout/function/curry','./anyToDeferred','mout/object/keys','mout/collection/size'],function(require) {
+define('deferreds/pipe',['require','./Deferred','mout/lang/isArray','mout/lang/toArray','mout/function/partial','./anyToDeferred','mout/object/keys','mout/collection/size'],function(require) {
 
 	var Deferred = require('./Deferred');
 	var isArray = require('mout/lang/isArray');
 	var toArray = require('mout/lang/toArray');
-	var curry = require('mout/function/curry');
+	var partial = require('mout/function/partial');
 	var anyToDeferred = require('./anyToDeferred');
 	var objkeys = require('mout/object/keys');
 	var size = require('mout/collection/size');
@@ -1977,7 +1721,7 @@ define('deferreds/waterfall',['require','./Deferred','mout/lang/isArray','mout/l
 	 * @param {Any} tasks
 	 * @return {Promise}
 	 */
-	var waterfall = function(tasks) {
+	var pipe = function(tasks) {
 
 		var superDeferred = new Deferred();
 
@@ -2011,11 +1755,8 @@ define('deferreds/waterfall',['require','./Deferred','mout/lang/isArray','mout/l
 
 			var args = toArray(arguments);
 			args.unshift(task);
-			anyToDeferred( curry.apply(task, args) )
-				.fail(function() {
-					superDeferred.reject.apply(superDeferred, arguments);
-				})
-				.done(function() {
+			anyToDeferred( partial.apply(task, args) ).then(
+				function() {
 					completed += 1;
 					if (completed === size(tasks)) {
 						superDeferred.resolve.apply(superDeferred, arguments);
@@ -2023,7 +1764,11 @@ define('deferreds/waterfall',['require','./Deferred','mout/lang/isArray','mout/l
 					else {
 						iterate.apply(superDeferred, arguments);
 					}
-				});
+				},
+				function() {
+					superDeferred.reject.apply(superDeferred, arguments);
+				}
+			);
 		};
 
 		iterate();
@@ -2033,16 +1778,18 @@ define('deferreds/waterfall',['require','./Deferred','mout/lang/isArray','mout/l
 	};
 
 
-	return waterfall;
+	return pipe;
 
 });
 
-define('plugin/makeChains',['require','mout/object/forOwn','mout/object/merge','mout/lang/toArray','deferreds/waterfall'],function(require) {
+define('plugin/chain',['require','mout/object/forOwn','mout/object/merge','mout/lang/toArray','deferreds/pipe'],function(require) {
+
+	
 
 	var forOwn = require('mout/object/forOwn');
 	var merge = require('mout/object/merge');
 	var toArray = require('mout/lang/toArray');
-	var waterfall = require('deferreds/waterfall');
+	var pipe = require('deferreds/pipe');
 
 
 	var makeChains = function(constructor) {
@@ -2082,7 +1829,7 @@ define('plugin/makeChains',['require','mout/object/forOwn','mout/object/merge','
 					methods.unshift(args);
 				}
 
-				return waterfall(methods);
+				return pipe(methods);
 			};
 		});
 	};
@@ -2092,7 +1839,701 @@ define('plugin/makeChains',['require','mout/object/forOwn','mout/object/merge','
 
 });
 
+define('plugin/clone',['require','../util/forceNew','../util/isElement','mout/object/forOwn','mout/lang/kindOf','mout/lang/isFunction'],function(require) {
+
+	
+
+	var forceNew = require('../util/forceNew');
+	var isElement = require('../util/isElement');
+	var forOwn = require('mout/object/forOwn');
+	var kindOf = require('mout/lang/kindOf');
+	var isFunction = require('mout/lang/isFunction');
+
+
+	//modified from mout's lang/clone
+	function clone(val){
+		var result;
+
+		//don't clone DOM nodes (or jquery objects)
+		if (isElement(val)) {
+			result = val;
+			return result;
+		}
+
+		switch ( kindOf(val) ) {
+			case 'Object':
+				result = cloneObject(val);
+				break;
+			case 'Array':
+				result = cloneArray(val);
+				break;
+			case 'RegExp':
+				result = cloneRegExp(val);
+				break;
+			case 'Date':
+				result = cloneDate(val);
+				break;
+			default:
+				result = val;
+		}
+
+		return result;
+	}
+
+
+	function cloneObject(source) {
+		//object with a clone() method: respect its clone method
+		//(should return a true instance of something, rather than a
+		//plain object like cloneObject)
+		if (source.clone && isFunction(source.clone)) {
+			return source.clone();
+		}
+
+		var out = {};
+		forOwn(source, function(val, key) {
+			out[key] = clone(val);
+		});
+		return out;
+	}
+
+
+	function cloneRegExp(r){
+		var flags = '';
+		flags += r.multiline ? 'm' : '';
+		flags += r.global ? 'g' : '';
+		flags += r.ignoreCase ? 'i' : '';
+		return new RegExp(r.source, flags);
+	}
+
+
+	function cloneDate(date){
+		return new Date( date.getTime() );
+	}
+
+
+	function cloneArray(arr){
+		var out = [];
+		var i = -1;
+		var n = arr.length;
+		while (++i < n) {
+			out[i] = clone(arr[i]);
+		}
+		return out;
+	}
+
+
+	var makeClone = function(constructor) {
+		var proto = constructor.prototype;
+
+		proto.clone = function() {
+			var ret = forceNew(this.constructor);
+			forOwn(this, function(val, key) {
+				ret[key] = clone(val);
+			});
+			return ret;
+		};
+	};
+
+
+	return makeClone;
+
+});
+
+// Domain Public by Eric Wendelin http://eriwen.com/ (2008)
+//                  Luke Smith http://lucassmith.name/ (2008)
+//                  Loic Dachary <loic@dachary.org> (2008)
+//                  Johan Euphrosine <proppy@aminche.com> (2008)
+//                  Oyvind Sean Kinsey http://kinsey.no/blog (2010)
+//                  Victor Homyakov <victor-homyakov@users.sourceforge.net> (2010)
+
+/**
+ * Main function giving a function stack trace with a forced or passed in Error
+ *
+ * @cfg {Error} e The error to create a stacktrace from (optional)
+ * @cfg {Boolean} guess If we should try to resolve the names of anonymous functions
+ * @return {Array} of Strings with functions, lines, files, and arguments where possible
+ */
+function printStackTrace(options) {
+    options = options || {guess: true};
+    var ex = options.e || null, guess = !!options.guess;
+    var p = new printStackTrace.implementation(), result = p.run(ex);
+    return (guess) ? p.guessAnonymousFunctions(result) : result;
+}
+
+if (typeof module !== "undefined" && module.exports) {
+    module.exports = printStackTrace;
+}
+
+printStackTrace.implementation = function() {
+};
+
+printStackTrace.implementation.prototype = {
+    /**
+     * @param {Error} ex The error to create a stacktrace from (optional)
+     * @param {String} mode Forced mode (optional, mostly for unit tests)
+     */
+    run: function(ex, mode) {
+        ex = ex || this.createException();
+        // examine exception properties w/o debugger
+        //for (var prop in ex) {alert("Ex['" + prop + "']=" + ex[prop]);}
+        mode = mode || this.mode(ex);
+        if (mode === 'other') {
+            return this.other(arguments.callee);
+        } else {
+            return this[mode](ex);
+        }
+    },
+
+    createException: function() {
+        try {
+            this.undef();
+        } catch (e) {
+            return e;
+        }
+    },
+
+    /**
+     * Mode could differ for different exception, e.g.
+     * exceptions in Chrome may or may not have arguments or stack.
+     *
+     * @return {String} mode of operation for the exception
+     */
+    mode: function(e) {
+        if (e['arguments'] && e.stack) {
+            return 'chrome';
+        } else if (e.stack && e.sourceURL) {
+            return 'safari';
+        } else if (e.stack && e.number) {
+            return 'ie';
+        } else if (typeof e.message === 'string' && typeof window !== 'undefined' && window.opera) {
+            // e.message.indexOf("Backtrace:") > -1 -> opera
+            // !e.stacktrace -> opera
+            if (!e.stacktrace) {
+                return 'opera9'; // use e.message
+            }
+            // 'opera#sourceloc' in e -> opera9, opera10a
+            if (e.message.indexOf('\n') > -1 && e.message.split('\n').length > e.stacktrace.split('\n').length) {
+                return 'opera9'; // use e.message
+            }
+            // e.stacktrace && !e.stack -> opera10a
+            if (!e.stack) {
+                return 'opera10a'; // use e.stacktrace
+            }
+            // e.stacktrace && e.stack -> opera10b
+            if (e.stacktrace.indexOf("called from line") < 0) {
+                return 'opera10b'; // use e.stacktrace, format differs from 'opera10a'
+            }
+            // e.stacktrace && e.stack -> opera11
+            return 'opera11'; // use e.stacktrace, format differs from 'opera10a', 'opera10b'
+        } else if (e.stack) {
+            return 'firefox';
+        }
+        return 'other';
+    },
+
+    /**
+     * Given a context, function name, and callback function, overwrite it so that it calls
+     * printStackTrace() first with a callback and then runs the rest of the body.
+     *
+     * @param {Object} context of execution (e.g. window)
+     * @param {String} functionName to instrument
+     * @param {Function} function to call with a stack trace on invocation
+     */
+    instrumentFunction: function(context, functionName, callback) {
+        context = context || window;
+        var original = context[functionName];
+        context[functionName] = function instrumented() {
+            callback.call(this, printStackTrace().slice(4));
+            return context[functionName]._instrumented.apply(this, arguments);
+        };
+        context[functionName]._instrumented = original;
+    },
+
+    /**
+     * Given a context and function name of a function that has been
+     * instrumented, revert the function to it's original (non-instrumented)
+     * state.
+     *
+     * @param {Object} context of execution (e.g. window)
+     * @param {String} functionName to de-instrument
+     */
+    deinstrumentFunction: function(context, functionName) {
+        if (context[functionName].constructor === Function &&
+                context[functionName]._instrumented &&
+                context[functionName]._instrumented.constructor === Function) {
+            context[functionName] = context[functionName]._instrumented;
+        }
+    },
+
+    /**
+     * Given an Error object, return a formatted Array based on Chrome's stack string.
+     *
+     * @param e - Error object to inspect
+     * @return Array<String> of function calls, files and line numbers
+     */
+    chrome: function(e) {
+        var stack = (e.stack + '\n').replace(/^\S[^\(]+?[\n$]/gm, '').
+          replace(/^\s+(at eval )?at\s+/gm, '').
+          replace(/^([^\(]+?)([\n$])/gm, '{anonymous}()@$1$2').
+          replace(/^Object.<anonymous>\s*\(([^\)]+)\)/gm, '{anonymous}()@$1').split('\n');
+        stack.pop();
+        return stack;
+    },
+
+    /**
+     * Given an Error object, return a formatted Array based on Safari's stack string.
+     *
+     * @param e - Error object to inspect
+     * @return Array<String> of function calls, files and line numbers
+     */
+    safari: function(e) {
+        return e.stack.replace(/\[native code\]\n/m, '')
+            .replace(/^(?=\w+Error\:).*$\n/m, '')
+            .replace(/^@/gm, '{anonymous}()@')
+            .split('\n');
+    },
+
+    /**
+     * Given an Error object, return a formatted Array based on IE's stack string.
+     *
+     * @param e - Error object to inspect
+     * @return Array<String> of function calls, files and line numbers
+     */
+    ie: function(e) {
+        var lineRE = /^.*at (\w+) \(([^\)]+)\)$/gm;
+        return e.stack.replace(/at Anonymous function /gm, '{anonymous}()@')
+            .replace(/^(?=\w+Error\:).*$\n/m, '')
+            .replace(lineRE, '$1@$2')
+            .split('\n');
+    },
+
+    /**
+     * Given an Error object, return a formatted Array based on Firefox's stack string.
+     *
+     * @param e - Error object to inspect
+     * @return Array<String> of function calls, files and line numbers
+     */
+    firefox: function(e) {
+        return e.stack.replace(/(?:\n@:0)?\s+$/m, '').replace(/^[\(@]/gm, '{anonymous}()@').split('\n');
+    },
+
+    opera11: function(e) {
+        var ANON = '{anonymous}', lineRE = /^.*line (\d+), column (\d+)(?: in (.+))? in (\S+):$/;
+        var lines = e.stacktrace.split('\n'), result = [];
+
+        for (var i = 0, len = lines.length; i < len; i += 2) {
+            var match = lineRE.exec(lines[i]);
+            if (match) {
+                var location = match[4] + ':' + match[1] + ':' + match[2];
+                var fnName = match[3] || "global code";
+                fnName = fnName.replace(/<anonymous function: (\S+)>/, "$1").replace(/<anonymous function>/, ANON);
+                result.push(fnName + '@' + location + ' -- ' + lines[i + 1].replace(/^\s+/, ''));
+            }
+        }
+
+        return result;
+    },
+
+    opera10b: function(e) {
+        // "<anonymous function: run>([arguments not available])@file://localhost/G:/js/stacktrace.js:27\n" +
+        // "printStackTrace([arguments not available])@file://localhost/G:/js/stacktrace.js:18\n" +
+        // "@file://localhost/G:/js/test/functional/testcase1.html:15"
+        var lineRE = /^(.*)@(.+):(\d+)$/;
+        var lines = e.stacktrace.split('\n'), result = [];
+
+        for (var i = 0, len = lines.length; i < len; i++) {
+            var match = lineRE.exec(lines[i]);
+            if (match) {
+                var fnName = match[1]? (match[1] + '()') : "global code";
+                result.push(fnName + '@' + match[2] + ':' + match[3]);
+            }
+        }
+
+        return result;
+    },
+
+    /**
+     * Given an Error object, return a formatted Array based on Opera 10's stacktrace string.
+     *
+     * @param e - Error object to inspect
+     * @return Array<String> of function calls, files and line numbers
+     */
+    opera10a: function(e) {
+        // "  Line 27 of linked script file://localhost/G:/js/stacktrace.js\n"
+        // "  Line 11 of inline#1 script in file://localhost/G:/js/test/functional/testcase1.html: In function foo\n"
+        var ANON = '{anonymous}', lineRE = /Line (\d+).*script (?:in )?(\S+)(?:: In function (\S+))?$/i;
+        var lines = e.stacktrace.split('\n'), result = [];
+
+        for (var i = 0, len = lines.length; i < len; i += 2) {
+            var match = lineRE.exec(lines[i]);
+            if (match) {
+                var fnName = match[3] || ANON;
+                result.push(fnName + '()@' + match[2] + ':' + match[1] + ' -- ' + lines[i + 1].replace(/^\s+/, ''));
+            }
+        }
+
+        return result;
+    },
+
+    // Opera 7.x-9.2x only!
+    opera9: function(e) {
+        // "  Line 43 of linked script file://localhost/G:/js/stacktrace.js\n"
+        // "  Line 7 of inline#1 script in file://localhost/G:/js/test/functional/testcase1.html\n"
+        var ANON = '{anonymous}', lineRE = /Line (\d+).*script (?:in )?(\S+)/i;
+        var lines = e.message.split('\n'), result = [];
+
+        for (var i = 2, len = lines.length; i < len; i += 2) {
+            var match = lineRE.exec(lines[i]);
+            if (match) {
+                result.push(ANON + '()@' + match[2] + ':' + match[1] + ' -- ' + lines[i + 1].replace(/^\s+/, ''));
+            }
+        }
+
+        return result;
+    },
+
+    // Safari 5-, IE 9-, and others
+    other: function(curr) {
+        var ANON = '{anonymous}', fnRE = /function\s*([\w\-$]+)?\s*\(/i, stack = [], fn, args, maxStackSize = 10;
+        while (curr && curr['arguments'] && stack.length < maxStackSize) {
+            fn = fnRE.test(curr.toString()) ? RegExp.$1 || ANON : ANON;
+            args = Array.prototype.slice.call(curr['arguments'] || []);
+            stack[stack.length] = fn + '(' + this.stringifyArguments(args) + ')';
+            curr = curr.caller;
+        }
+        return stack;
+    },
+
+    /**
+     * Given arguments array as a String, subsituting type names for non-string types.
+     *
+     * @param {Arguments} args
+     * @return {Array} of Strings with stringified arguments
+     */
+    stringifyArguments: function(args) {
+        var result = [];
+        var slice = Array.prototype.slice;
+        for (var i = 0; i < args.length; ++i) {
+            var arg = args[i];
+            if (arg === undefined) {
+                result[i] = 'undefined';
+            } else if (arg === null) {
+                result[i] = 'null';
+            } else if (arg.constructor) {
+                if (arg.constructor === Array) {
+                    if (arg.length < 3) {
+                        result[i] = '[' + this.stringifyArguments(arg) + ']';
+                    } else {
+                        result[i] = '[' + this.stringifyArguments(slice.call(arg, 0, 1)) + '...' + this.stringifyArguments(slice.call(arg, -1)) + ']';
+                    }
+                } else if (arg.constructor === Object) {
+                    result[i] = '#object';
+                } else if (arg.constructor === Function) {
+                    result[i] = '#function';
+                } else if (arg.constructor === String) {
+                    result[i] = '"' + arg + '"';
+                } else if (arg.constructor === Number) {
+                    result[i] = arg;
+                }
+            }
+        }
+        return result.join(',');
+    },
+
+    sourceCache: {},
+
+    /**
+     * @return the text from a given URL
+     */
+    ajax: function(url) {
+        var req = this.createXMLHTTPObject();
+        if (req) {
+            try {
+                req.open('GET', url, false);
+                //req.overrideMimeType('text/plain');
+                //req.overrideMimeType('text/javascript');
+                req.send(null);
+                //return req.status == 200 ? req.responseText : '';
+                return req.responseText;
+            } catch (e) {
+            }
+        }
+        return '';
+    },
+
+    /**
+     * Try XHR methods in order and store XHR factory.
+     *
+     * @return <Function> XHR function or equivalent
+     */
+    createXMLHTTPObject: function() {
+        var xmlhttp, XMLHttpFactories = [
+            function() {
+                return new XMLHttpRequest();
+            }, function() {
+                return new ActiveXObject('Msxml2.XMLHTTP');
+            }, function() {
+                return new ActiveXObject('Msxml3.XMLHTTP');
+            }, function() {
+                return new ActiveXObject('Microsoft.XMLHTTP');
+            }
+        ];
+        for (var i = 0; i < XMLHttpFactories.length; i++) {
+            try {
+                xmlhttp = XMLHttpFactories[i]();
+                // Use memoization to cache the factory
+                this.createXMLHTTPObject = XMLHttpFactories[i];
+                return xmlhttp;
+            } catch (e) {
+            }
+        }
+    },
+
+    /**
+     * Given a URL, check if it is in the same domain (so we can get the source
+     * via Ajax).
+     *
+     * @param url <String> source url
+     * @return False if we need a cross-domain request
+     */
+    isSameDomain: function(url) {
+        return typeof location !== "undefined" && url.indexOf(location.hostname) !== -1; // location may not be defined, e.g. when running from nodejs.
+    },
+
+    /**
+     * Get source code from given URL if in the same domain.
+     *
+     * @param url <String> JS source URL
+     * @return <Array> Array of source code lines
+     */
+    getSource: function(url) {
+        // TODO reuse source from script tags?
+        if (!(url in this.sourceCache)) {
+            this.sourceCache[url] = this.ajax(url).split('\n');
+        }
+        return this.sourceCache[url];
+    },
+
+    guessAnonymousFunctions: function(stack) {
+        for (var i = 0; i < stack.length; ++i) {
+            var reStack = /\{anonymous\}\(.*\)@(.*)/,
+                reRef = /^(.*?)(?::(\d+))(?::(\d+))?(?: -- .+)?$/,
+                frame = stack[i], ref = reStack.exec(frame);
+
+            if (ref) {
+                var m = reRef.exec(ref[1]);
+                if (m) { // If falsey, we did not get any file/line information
+                    var file = m[1], lineno = m[2], charno = m[3] || 0;
+                    if (file && this.isSameDomain(file) && lineno) {
+                        var functionName = this.guessAnonymousFunction(file, lineno, charno);
+                        stack[i] = frame.replace('{anonymous}', functionName);
+                    }
+                }
+            }
+        }
+        return stack;
+    },
+
+    guessAnonymousFunction: function(url, lineNo, charNo) {
+        var ret;
+        try {
+            ret = this.findFunctionName(this.getSource(url), lineNo);
+        } catch (e) {
+            ret = 'getSource failed with url: ' + url + ', exception: ' + e.toString();
+        }
+        return ret;
+    },
+
+    findFunctionName: function(source, lineNo) {
+        // FIXME findFunctionName fails for compressed source
+        // (more than one function on the same line)
+        // function {name}({args}) m[1]=name m[2]=args
+        var reFunctionDeclaration = /function\s+([^(]*?)\s*\(([^)]*)\)/;
+        // {name} = function ({args}) TODO args capture
+        // /['"]?([0-9A-Za-z_]+)['"]?\s*[:=]\s*function(?:[^(]*)/
+        var reFunctionExpression = /['"]?([$_A-Za-z][$_A-Za-z0-9]*)['"]?\s*[:=]\s*function\b/;
+        // {name} = eval()
+        var reFunctionEvaluation = /['"]?([$_A-Za-z][$_A-Za-z0-9]*)['"]?\s*[:=]\s*(?:eval|new Function)\b/;
+        // Walk backwards in the source lines until we find
+        // the line which matches one of the patterns above
+        var code = "", line, maxLines = Math.min(lineNo, 20), m, commentPos;
+        for (var i = 0; i < maxLines; ++i) {
+            // lineNo is 1-based, source[] is 0-based
+            line = source[lineNo - i - 1];
+            commentPos = line.indexOf('//');
+            if (commentPos >= 0) {
+                line = line.substr(0, commentPos);
+            }
+            // TODO check other types of comments? Commented code may lead to false positive
+            if (line) {
+                code = line + code;
+                m = reFunctionExpression.exec(code);
+                if (m && m[1]) {
+                    return m[1];
+                }
+                m = reFunctionDeclaration.exec(code);
+                if (m && m[1]) {
+                    //return m[1] + "(" + (m[2] || "") + ")";
+                    return m[1];
+                }
+                m = reFunctionEvaluation.exec(code);
+                if (m && m[1]) {
+                    return m[1];
+                }
+            }
+        }
+        return '(?)';
+    }
+};
+
+define("stacktrace", (function (global) {
+    return function () {
+        var ret, fn;
+        return ret || global.printStackTrace;
+    };
+}(this)));
+
+/*jshint strict:false*/
+define('plugin/guessName',['require','stacktrace'],function(require) {
+
+	var stacktrace = require('stacktrace');
+
+
+	/*
+	 * Convention: if the result of the call to create() or extend() is
+	 * assigned to a variable, we use that name as the class name
+	 */
+	var guessName = function(constructor) {
+		var trace = new stacktrace.implementation();
+		var stack = trace.run(null);
+
+		var guessNamePos;
+		stack.every(function(line, i) {
+			if (line.search(/\/plugin\/guessName\.js/) !== -1) {
+				guessNamePos = i;
+				return false;
+			}
+			return true;
+		});
+
+		if (!guessNamePos) {
+			return;
+		}
+
+		var declarationPos = guessNamePos + 2;
+		var parts = stack[declarationPos].match(/^.*?\((.*?)(?::(\d+))(?::(\d+))/);
+
+		if (!parts) {
+			parts = stack[declarationPos].match(/^\s*at\s*(.*?)(?::(\d+))(?::(\d+))$/);
+		}
+
+		var file = parts[1];
+		var source = trace.getSource(file);
+
+		if (!source || !source.length) {
+			return;
+		}
+
+		var lineno = parts[2];
+		var line = source[lineno - 1];
+
+		//e.g. var (name) = create({...
+		var rClassCreate = /^\s*?(?:var)?\s*?(\S+?)\s*?=\s*?create/;
+		//e.g. var (name) = (Superclass).extend({...
+		var rClassExtend = /^\s*?(?:var)?\s*?(\S+?)\s*?=\s*?(\S+?)\.extend/;
+
+		var matches = line.match(rClassCreate);
+
+		if (!matches) {
+			matches = line.match(rClassExtend);
+		}
+
+		if (!matches) {
+			return;
+		}
+
+		constructor._meta.name = matches[1];
+
+	};
+
+
+	return guessName;
+
+});
+
+/*jshint strict:false*/
+define('plugin/super',['require','mout/object/forOwn','mout/object/filter','mout/lang/isFunction'],function(require) {
+
+	var forOwn = require('mout/object/forOwn');
+	var filter = require('mout/object/filter');
+	var isFunction = require('mout/lang/isFunction');
+
+
+	var superMethod = function() {
+		var curr = this._super.curr;
+		if (!curr) {
+			curr = this._super.curr = {};
+			//keep a pointer to which base class we're operating on, so that
+			//upstream _super calls are directed to methods progressively
+			//higher in the chain
+			curr.pos = 0;
+			//Function.caller is expensive. We can cache it across _super calls
+			//within the same function chain (same-named)
+			curr.key = superMethod.caller.nom;
+		}
+
+		var list = this.constructor._meta.superList;
+		curr.fn = list[curr.key] && list[curr.key][curr.pos];
+		curr.pos++;
+
+		if (!curr.fn) {
+			var className = this.constructor._meta.name;
+			var err = className + '#' + curr.key + ': no method by this name in superclasses (';
+			err += [className].concat(
+				this.constructor._meta.bases.map(function(base) {
+					return base._meta.name;
+				})
+			).join(' > ');
+			err += ')';
+			throw new Error(err);
+		}
+
+		var ret = curr.fn.apply(this, arguments);
+		this._super.curr = null;
+		return ret;
+	};
+
+
+	var makeSuper = function(constructor) {
+		var meta = constructor._meta;
+		var proto = constructor.prototype;
+
+		//cache of which base methods should be used for each _super method,
+		//and in what order
+		meta.superList = {};
+
+		forOwn(filter(meta.members, isFunction), function(member, key) {
+			proto[key].nom = key;
+			meta.superList[key] = meta.bases
+				.filter(function(base) {
+					return base._meta.members.hasOwnProperty(key);
+				})
+				.map(function(base) {
+					return base._meta.members[key];
+				});
+		});
+
+		proto._super = superMethod;
+	};
+
+
+	return makeSuper;
+
+});
+
 define('util/ObjectProxy',['require','mout/lang/isObject','mout/object/forOwn','mout/object/size'],function(require) {
+
+	
 
 	var isObject = require('mout/lang/isObject');
 	var forOwn = require('mout/object/forOwn');
@@ -2243,7 +2684,9 @@ define('util/ObjectProxy',['require','mout/lang/isObject','mout/object/forOwn','
 
 });
 
-define('plugin/makeProps',['require','mout/object/forOwn','mout/lang/isObject','mout/object/merge','../util/ObjectProxy'],function(require) {
+define('plugin/props',['require','mout/object/forOwn','mout/lang/isObject','mout/object/merge','../util/ObjectProxy'],function(require) {
+
+	
 
 	var forOwn = require('mout/object/forOwn');
 	var isObject = require('mout/lang/isObject');
@@ -2308,7 +2751,8 @@ define('plugin/makeProps',['require','mout/object/forOwn','mout/lang/isObject','
 				}
 			});
 
-		//if they don't exist, make placeholders for parents of nested properties
+		//if they don't exist, make placeholders for parents of nested
+		//properties
 		Object.keys(meta.descriptors)
 			.filter(function(key) {
 				return key.search(/\./) !== -1;
@@ -2378,39 +2822,42 @@ define('plugin/makeProps',['require','mout/object/forOwn','mout/lang/isObject','
 
 });
 
-/*jshint evil:true */
-define('create',['require','./base','./makeConstructor','./util/forceNew','./util/defaults','plugin/guessClassName','plugin/makeSuper','plugin/makeClone','plugin/makeApply','plugin/makeChains','plugin/makeProps'],function(require) {
+/*jshint evil:true, strict:false */
+define('create',['require','./basicCreate','./makeConstructor','./util/forceNew','./util/defaults','./plugin/apply','./plugin/chain','./plugin/clone','./plugin/guessName','./plugin/super','./plugin/props'],function(require) {
 
-	var base = require('./base');
+	var basicCreate = require('./basicCreate');
 	var makeConstructor = require('./makeConstructor');
 	var forceNew = require('./util/forceNew');
 	var defaults = require('./util/defaults');
-	var guessClassName = require('plugin/guessClassName');
-	var makeSuper = require('plugin/makeSuper');
-	var makeClone = require('plugin/makeClone');
-	var makeApply = require('plugin/makeApply');
-	var makeChains = require('plugin/makeChains');
-	var makeProps = require('plugin/makeProps');
+	var plugin = {
+		apply: require('./plugin/apply'),
+		chain: require('./plugin/chain'),
+		clone: require('./plugin/clone'),
+		guessName: require('./plugin/guessName'),
+		_super: require('./plugin/super'),
+		props: require('./plugin/props')
+	};
 
 
+	//the actual constructor function (invoked with the `new` operator)
 	var ctorFn = function(meta) {
-		return function(other) {
+		return function $Class(other) {
 			//signal minifiers to avoid mangling names in this eval'd scope
 			eval('');
 
-			//this following is eval'd from joss/oop/classes/create, in order
+			//this following is eval'd from class/create, in order
 			//to override the constructor name given in common debuggers
 			//more: http://stackoverflow.com/questions/8073055/minor-drawback-with-crockford-prototypical-inheritance/8076515
 		
-			if(!(this instanceof arguments.callee)){
+			if(!(this instanceof $Class)){
 				// not called via new, so force it
-				var instance = forceNew(arguments.callee);
-				arguments.callee.apply(instance, arguments);
+				var instance = forceNew($Class);
+				$Class.apply(instance, arguments);
 				return instance;
 			}
 
 			//copy constructor for instances of this or any superclasses
-			if (arguments.length === 1 && (other.constructor === arguments.callee || meta.bases.indexOf(other.constructor) !== -1)) {
+			if (arguments.length === 1 && (other.constructor === $Class || meta.bases.indexOf(other.constructor) !== -1)) {
 				this._data = other.clone()._data;
 				return;
 			}
@@ -2440,7 +2887,7 @@ define('create',['require','./base','./makeConstructor','./util/forceNew','./uti
 		 * ----------------------------------------------------------------------
 		 */
 
-		var constructor = base.apply(undefined, arguments);
+		var constructor = basicCreate.apply(undefined, arguments);
 		var proto = constructor.prototype;
 		var meta = constructor._meta;
 
@@ -2453,22 +2900,22 @@ define('create',['require','./base','./makeConstructor','./util/forceNew','./uti
 		 */
 
 		//_super() method
-		makeSuper(constructor);
+		plugin._super(constructor);
 
 		//clone() method
-		makeClone(constructor);
+		plugin.clone(constructor);
 
 		//_apply() method
-		makeApply(constructor);
+		plugin.apply(constructor);
 
 		//AOP-style 'after' or 'before' method chaining
-		makeChains(constructor);
+		plugin.chain(constructor);
 
 		//ES5 properties for members like {get: fn, set: fn}
-		makeProps(constructor);
+		plugin.props(constructor);
 
 		//attempt to guess class name from source
-		guessClassName(constructor);
+		plugin.guessName(constructor);
 
 		//initialize the `_data` member upon construction
 		meta.defaults = meta.members.__defaults || {};
@@ -2483,7 +2930,7 @@ define('create',['require','./base','./makeConstructor','./util/forceNew','./uti
 
 		constructor = makeConstructor(
 			//see ctorFn() above for explanation of why eval() is used here
-			eval('1&&function ' + (meta.name || '') + ctorFn(meta).toString().replace(/^function\s+/, '')),
+			eval('1&&function ' + ctorFn(meta).toString().replace(/\$Class/g, meta.name).replace(/^function\s+/, '')),
 			proto,
 			meta
 		);
@@ -2508,6 +2955,8 @@ define('create',['require','./base','./makeConstructor','./util/forceNew','./uti
 });
 
 define('Class',['require','./create'],function(require) {
+
+	
 
 	var create = require('./create');
 
@@ -2562,7 +3011,7 @@ return {
 	"mout/object/forOwn": require("mout/object/forOwn"),
 	"methodResolutionOrder": require("methodResolutionOrder"),
 	"makeConstructor": require("makeConstructor"),
-	"base": require("base"),
+	"basicCreate": require("basicCreate"),
 	"util/forceNew": require("util/forceNew"),
 	"mout/collection/make_": require("mout/collection/make_"),
 	"mout/array/forEach": require("mout/array/forEach"),
@@ -2570,32 +3019,34 @@ return {
 	"mout/lang/isObject": require("mout/lang/isObject"),
 	"util/isElement": require("util/isElement"),
 	"util/defaults": require("util/defaults"),
-	"plugin/guessClassName": require("plugin/guessClassName"),
-	"mout/lang/isFunction": require("mout/lang/isFunction"),
-	"plugin/makeSuper": require("plugin/makeSuper"),
-	"plugin/makeClone": require("plugin/makeClone"),
 	"mout/object/filter": require("mout/object/filter"),
-	"plugin/makeApply": require("plugin/makeApply"),
+	"plugin/apply": require("plugin/apply"),
 	"mout/lang/isPlainObject": require("mout/lang/isPlainObject"),
+	"mout/object/mixIn": require("mout/object/mixIn"),
+	"mout/lang/clone": require("mout/lang/clone"),
 	"mout/lang/deepClone": require("mout/lang/deepClone"),
 	"mout/object/merge": require("mout/object/merge"),
 	"deferreds/forceNew": require("deferreds/forceNew"),
 	"mout/lang/isArray": require("mout/lang/isArray"),
 	"mout/function/bind": require("mout/function/bind"),
-	"mout/object/mixIn": require("mout/object/mixIn"),
 	"deferreds/isDeferred": require("deferreds/isDeferred"),
 	"deferreds/isPromise": require("deferreds/isPromise"),
 	"deferreds/Promise": require("deferreds/Promise"),
 	"deferreds/Deferred": require("deferreds/Deferred"),
-	"mout/function/curry": require("mout/function/curry"),
+	"mout/function/partial": require("mout/function/partial"),
+	"mout/lang/isFunction": require("mout/lang/isFunction"),
 	"deferreds/anyToDeferred": require("deferreds/anyToDeferred"),
 	"mout/object/keys": require("mout/object/keys"),
 	"mout/object/size": require("mout/object/size"),
 	"mout/collection/size": require("mout/collection/size"),
-	"deferreds/waterfall": require("deferreds/waterfall"),
-	"plugin/makeChains": require("plugin/makeChains"),
+	"deferreds/pipe": require("deferreds/pipe"),
+	"plugin/chain": require("plugin/chain"),
+	"plugin/clone": require("plugin/clone"),
+	"stacktrace": require("stacktrace"),
+	"plugin/guessName": require("plugin/guessName"),
+	"plugin/super": require("plugin/super"),
 	"util/ObjectProxy": require("util/ObjectProxy"),
-	"plugin/makeProps": require("plugin/makeProps"),
+	"plugin/props": require("plugin/props"),
 	"create": require("create"),
 	"Class": require("Class")
 };

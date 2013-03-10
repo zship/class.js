@@ -2,20 +2,26 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>joss test</title>
-    <link rel="stylesheet" href="./lib/qunit-1.10.0.css">
-    <script src="./lib/qunit-1.10.0.js"></script>
+    <title>Test Runner</title>
+    <link rel="stylesheet" href="../node_modules/grunt-amd-test/tasks/lib/qunit-1.10.0.css">
+    <script src="../node_modules/grunt-amd-test/tasks/lib/qunit-1.10.0.js"></script>
+    <script src="../node_modules/grunt-amd-test/tasks/lib/require.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-    <script src="./lib/require.js"></script>
+    <script>QUnit.config.autostart = false;</script>
     <script>
-      QUnit.config.autostart = false;
       require(
        {
     "baseUrl": "../src",
     "optimize": "none",
     "paths": {
         "mout": "../lib/mout",
-        "deferreds": "../lib/deferreds"
+        "deferreds": "../lib/deferreds",
+        "stacktrace": "../lib/stacktrace/stacktrace"
+    },
+    "shim": {
+        "stacktrace": {
+            "exports": "printStackTrace"
+        }
     },
     "keepBuildDir": true,
     "locale": "en-us",
@@ -31,24 +37,25 @@
     <script>
       require(
        [
-    "../test/spec/create",
-    "../test/spec/makeConstructor",
-    "../test/spec/util/forceNew",
-    "../test/spec/util/defaults",
-    "../test/spec/util/isElement",
-    "../test/spec/Class",
-    "../test/spec/base",
-    "../test/spec/methodResolutionOrder",
-    "../test/spec/plugin/makeClone",
-    "../test/spec/plugin/makeChains",
-    "../test/spec/plugin/makeDebug",
-    "../test/spec/plugin/makeSuper",
-    "../test/spec/plugin/guessClassName",
-    "../test/spec/plugin/makeProps",
-    "../test/spec/plugin/makeApply"
+    "unit/Class.js",
+    "unit/create.js",
+    "unit/methodResolutionOrder.js",
+    "unit/plugin/chain.js",
+    "unit/plugin/guessName.js",
+    "unit/plugin/props.js",
+    "unit/plugin/super.js"
 ],
        function() {
-        QUnit.start();
+        if (window.QUnit) {
+         QUnit.start();
+        }
+        else if (window.jasmine) {
+         var jasmineEnv = jasmine.getEnv();
+         jasmineEnv.updateInterval = 1000;
+         var htmlReporter = new jasmine.HtmlReporter();
+         jasmineEnv.addReporter(htmlReporter);
+         jasmineEnv.execute();
+        }
        }
       );
     </script>

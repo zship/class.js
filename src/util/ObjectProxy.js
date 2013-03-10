@@ -1,5 +1,7 @@
 define(function(require) {
 
+	'use strict';
+
 	var isObject = require('mout/lang/isObject');
 	var forOwn = require('mout/object/forOwn');
 	var size = require('mout/object/size');

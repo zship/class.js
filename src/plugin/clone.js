@@ -1,5 +1,7 @@
 define(function(require) {
 
+	'use strict';
+
 	var forceNew = require('../util/forceNew');
 	var isElement = require('../util/isElement');
 	var forOwn = require('mout/object/forOwn');

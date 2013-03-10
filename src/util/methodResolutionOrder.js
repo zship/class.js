@@ -1,5 +1,7 @@
 define(function() {
 
+	'use strict';
+
 	var _merge = function(seqs) {
 		var result = [];
 

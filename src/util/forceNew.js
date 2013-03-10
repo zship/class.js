@@ -1,20 +1,21 @@
+/*jshint evil:true, strict:false*/
 define(function() {
 
 	//return a new object that inherits from ctor.prototype but without
 	//actually running ctor on the object.
 	var forceNew = function(ctor) {
 		//create object with correct prototype using a do-nothing constructor
-		var xtor;
+		var Xtor;
 		if (ctor._meta && ctor._meta.name) {
 			//override constructor name given in common debuggers
-			xtor = eval('1&&function ' + ctor._meta.name + '(){}');
+			Xtor = eval('1&&function ' + ctor._meta.name + '(){}');
 		}
 		else {
-			xtor = function() {};
+			Xtor = function() {};
 		}
-		xtor.prototype = ctor.prototype;
-		var instance = new xtor();
-		xtor.prototype = null;
+		Xtor.prototype = ctor.prototype;
+		var instance = new Xtor();
+		Xtor.prototype = null;
 		return instance;
 	};
 

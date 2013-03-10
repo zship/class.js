@@ -1,5 +1,7 @@
 define(function(require) {
 
+	'use strict';
+
 	var forEach = require('mout/collection/forEach');
 	var isObject = require('mout/lang/isObject');
 	var isElement = require('./isElement');

@@ -1,11 +1,13 @@
 define(function(require){
 
+	'use strict';
+
 	var create = require('create');
 	var Class = require('Class');
-	var guessClassName = require('plugin/guessClassName');
+	var guessClassName = require('plugin/guessName');
 
 
-	module('plugin/guessClassName');
+	module('plugin/guessName');
 
 
 	test('Guessing class names from source', function() {

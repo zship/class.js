@@ -1,9 +1,11 @@
 define(function(require){
 
+	'use strict';
+
 	var create = require('create');
 
 
-	module('plugin/makeProps');
+	module('plugin/props');
 
 
 	test('Generated Accessors', function() {

@@ -1,5 +1,7 @@
 define(function(require){
 
+	'use strict';
+
 	var create = require('create');
 
 

@@ -1,5 +1,6 @@
 {
-	"name": "class.js",
+	"name": "class",
+	"main": "dist/class.js",
 	"title": "class.js",
 	"description": "AMD-compliant classical inheritance library",
 	"version": "0.1.0",
@@ -11,12 +12,20 @@
 	},
 	"license": "MIT",
 	"dependencies": {
-		"mout": "git://github.com/mout/mout.git#v0.2.0"
+		"mout": "0.3.x"
 	},
 	"devDependencies": {
-		"deferreds": "git://github.com/zship/deferreds.js.git#develop",
-		"grunt-amd-dist": "git://github.com/zship/grunt-amd-dist.git",
-		"grunt-amd-test": "git://github.com/zship/grunt-amd-test.git"
+		"grunt": "0.4.x",
+		"grunt-contrib-qunit": "0.1.x",
+		"grunt-contrib-uglify": "0.1.x",
+		"grunt-contrib-jshint": "0.1.x",
+		"grunt-amd-dist": "0.4.x",
+		"grunt-amd-test": "0.4.x",
+		"grunt-amd-check": "0.4.x",
+		"deferreds": "0.2.x",
+		"stacktrace-js": "0.5.x",
+		"express": "3.1.x",
+		"json-lint": "0.1.x"
 	},
 	"keywords": []
 }

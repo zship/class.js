@@ -1,36 +1,39 @@
-/*jshint evil:true */
+/*jshint evil:true, strict:false */
 define(function(require) {
 
-	var base = require('./base');
-	var makeConstructor = require('./makeConstructor');
+	var basicCreate = require('./basicCreate');
+	var makeConstructor = require('./util/makeConstructor');
 	var forceNew = require('./util/forceNew');
 	var defaults = require('./util/defaults');
-	var guessClassName = require('./plugin/guessClassName');
-	var makeSuper = require('./plugin/makeSuper');
-	var makeClone = require('./plugin/makeClone');
-	var makeApply = require('./plugin/makeApply');
-	var makeChains = require('./plugin/makeChains');
-	var makeProps = require('./plugin/makeProps');
+	var plugin = {
+		apply: require('./plugin/apply'),
+		chain: require('./plugin/chain'),
+		clone: require('./plugin/clone'),
+		guessName: require('./plugin/guessName'),
+		_super: require('./plugin/super2'),
+		props: require('./plugin/props')
+	};
 
 
+	//the actual constructor function (invoked with the `new` operator)
 	var ctorFn = function(meta) {
-		return function(other) {
+		return function $Class(other) {
 			//signal minifiers to avoid mangling names in this eval'd scope
 			eval('');
 
-			//this following is eval'd from joss/oop/classes/create, in order
+			//this following is eval'd from class/create, in order
 			//to override the constructor name given in common debuggers
 			//more: http://stackoverflow.com/questions/8073055/minor-drawback-with-crockford-prototypical-inheritance/8076515
 		
-			if(!(this instanceof arguments.callee)){
+			if(!(this instanceof $Class)){
 				// not called via new, so force it
-				var instance = forceNew(arguments.callee);
-				arguments.callee.apply(instance, arguments);
+				var instance = forceNew($Class);
+				$Class.apply(instance, arguments);
 				return instance;
 			}
 
 			//copy constructor for instances of this or any superclasses
-			if (arguments.length === 1 && (other.constructor === arguments.callee || meta.bases.indexOf(other.constructor) !== -1)) {
+			if (arguments.length === 1 && (other.constructor === $Class || meta.bases.indexOf(other.constructor) !== -1)) {
 				this._data = other.clone()._data;
 				return;
 			}
@@ -60,7 +63,7 @@ define(function(require) {
 		 * ----------------------------------------------------------------------
 		 */
 
-		var constructor = base.apply(undefined, arguments);
+		var constructor = basicCreate.apply(undefined, arguments);
 		var proto = constructor.prototype;
 		var meta = constructor._meta;
 
@@ -73,22 +76,22 @@ define(function(require) {
 		 */
 
 		//_super() method
-		makeSuper(constructor);
+		plugin._super(constructor);
 
 		//clone() method
-		makeClone(constructor);
+		plugin.clone(constructor);
 
 		//_apply() method
-		makeApply(constructor);
+		plugin.apply(constructor);
 
 		//AOP-style 'after' or 'before' method chaining
-		makeChains(constructor);
+		plugin.chain(constructor);
 
 		//ES5 properties for members like {get: fn, set: fn}
-		makeProps(constructor);
+		plugin.props(constructor);
 
 		//attempt to guess class name from source
-		guessClassName(constructor);
+		plugin.guessName(constructor);
 
 		//initialize the `_data` member upon construction
 		meta.defaults = meta.members.__defaults || {};
@@ -103,7 +106,7 @@ define(function(require) {
 
 		constructor = makeConstructor(
 			//see ctorFn() above for explanation of why eval() is used here
-			eval('1&&function ' + (meta.name || '') + ctorFn(meta).toString().replace(/^function\s+/, '')),
+			eval('1&&function ' + ctorFn(meta).toString().replace(/\$Class/g, meta.name).replace(/^function\s+/, '')),
 			proto,
 			meta
 		);
