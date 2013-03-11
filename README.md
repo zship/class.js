@@ -1,10 +1,39 @@
+Documentation is in progress; more on the wiki pages.
+
 class.js
 ========
 
-class.js is a highly modular library (using AMD conventions) for simulating
-classical inheritance. It is modeled after
+class.js is a modular library (using AMD conventions) for simulating classical
+inheritance. It is modeled after
 [dojo/_base/declare](http://dojotoolkit.org/reference-guide/1.8/dojo/_base/declare.html#dojo-base-declare),
 but designed to be customizable.
+
+
+Why?
+----
+
+This has been done before. There's the aforementioned
+[dojo/_base/declare](http://dojotoolkit.org/reference-guide/1.8/dojo/_base/declare.html#dojo-base-declare),
+[js.class](http://jsclass.jcoglan.com/),
+[base.js](http://dean.edwards.name/weblog/2006/03/base/), and [John Resig's
+take on it](http://ejohn.org/blog/simple-javascript-inheritance/) to name a
+few. Here's what characterizes class.js:
+
+* Familiar
+    * Tries to resemble C++, Java, and C# because of their
+      [popularity](http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html)
+      and syntactic similarity to JavaScript.
+    * At the same time, tries not to stray too far from JavaScript norms. That
+      is, class definitions should resemble the common pattern of using a
+      `mixin` or `extend` method on the prototype object. For example, class.js
+      won't use string parsing to enable "public", "private", "protected"
+      and/or "static" distinctions.
+* Hackable
+    * Kept as modular as possible to aid readability and facilitate overriding
+      specific functionality
+    * Emphasizes imperative rather than declarative style in library code
+      (specifically with "plugins", actually call the damn function rather the
+      "registering" it with something. No "magic", debugger-friendly.)
 
 
 
@@ -23,11 +52,11 @@ which produces a standard JavaScript constructor function (which class.js calls 
 * {Object} members
   * the "instance members" of the class
 
-`class/create` is the **heart of this library**. Whenever you want to create a
-new class, you'll either want to require this module (to create a new class
-dojo-style via `create()`) or `class/Class` (to create a new class via
-`Class.extend()`, which is just sugar for `class/create`). Here's how
-`class/create` is used:
+`class/create` is the heart of this library. It's the main entry point for
+anyone wishing to hack on class.js. Whenever you want to create a new class,
+you'll either want to require this module (to create a new class dojo-style via
+`create()`) or `class/Class` (to create a new class via `Class.extend()`, which
+is just sugar for `class/create`). Here's how `class/create` is used:
 
 ```js
 var create = require('class/create');
@@ -63,13 +92,6 @@ console.log(rect.height); //> 50
 
 
 
-A "class" in-depth
------------------------------
-
-
-
-
-
 Customizing class/create
 ------------------------
 
@@ -101,6 +123,4 @@ Plugins are functions which accept one argument: the incomplete class
 (constructor function). They read and/or mutate two properties of the class:
 `_meta` (class.js introspection information) and `prototype` (the standard
 JavaScript prototype object). **The main goal of a plugin is to add something
-useful to** `prototype`, and hence to the eventual instances of the class. The
-plugins included with class.js and used by the default `class/create`
-implementation are:
+useful to** `prototype`, and hence to the eventual instances of the class.
