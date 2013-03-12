@@ -6,15 +6,15 @@ class.js
 class.js is a modular library (using AMD conventions) for simulating classical
 inheritance. It is modeled after
 [dojo/_base/declare](http://dojotoolkit.org/reference-guide/1.8/dojo/_base/declare.html#dojo-base-declare),
-but designed to be customizable. Here are its default features:
+but designed to be customizable. Here are its default (most are optional!) features:
 
 * Multiple inheritance
 * Optional usage of `new`
 * Copy constructor
-* [[super() method|Plugins:-super]]
-* [[ES5 Properties (Getters/Setters)|Plugins:-props]]
-* [[AOP-style method chaining|Plugins:-chain]]
-* [[clone() method|Plugins:-clone]]
+* [super() method](https://github.com/zship/class.js/wiki/Plugins%3A-super)
+* [ES5 Properties (Getters/Setters)](https://github.com/zship/class.js/wiki/Plugins%3A-props)
+* [AOP-style method chaining](https://github.com/zship/class.js/wiki/Plugins%3A-chain)
+* [clone() method](https://github.com/zship/class.js/wiki/Plugins%3A-clone)
 * Sets class names to be able to display in all debuggers
 * Guesses class names from source
 * Compatible with consumer code using [ES5 Strict
@@ -46,6 +46,9 @@ few. Here's what characterizes class.js:
     * Emphasizes imperative rather than declarative style in library code
       (specifically with "plugins", actually call the damn function rather the
       "registering" it with something. No "magic", debugger-friendly.)
+* Feature-packed
+    * Using the AMD format makes it really easy for users to turn off features
+      and completely strip out their code, so class.js doesn't hold back.
 
 
 
