@@ -22,39 +22,6 @@ but designed to be customizable. Here are its default (most are optional!) featu
 * Debugging: Sets the [displayName](http://www.alertdebugging.com/2009/04/29/building-a-better-javascript-profiler-with-webkit/) property for browsers which support it
 
 
-Why?
-----
-
-This has been done before. There's the aforementioned
-[dojo/_base/declare](http://dojotoolkit.org/reference-guide/1.8/dojo/_base/declare.html#dojo-base-declare),
-[js.class](http://jsclass.jcoglan.com/),
-[base.js](http://dean.edwards.name/weblog/2006/03/base/), and [John Resig's
-take on it](http://ejohn.org/blog/simple-javascript-inheritance/) to name a
-few. Here's what characterizes class.js:
-
-* Familiar
-    * Tries to resemble C++, Java, and C# because of their
-      [popularity](http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html)
-      and syntactic similarity to JavaScript.
-    * At the same time, tries not to stray too far from JavaScript norms. That
-      is, class definitions should resemble the common pattern of using a
-      `mixin` or `extend` method on the prototype object. For example, class.js
-      won't use string parsing to enable "public", "private", "protected"
-      and/or "static" distinctions.
-* Hackable
-    * Kept as modular as possible to aid readability and facilitate overriding
-      specific functionality
-    * Emphasizes imperative rather than declarative style in library code
-      (specifically with "plugins", actually call the damn function rather the
-      "registering" it with something. No "magic", debugger-friendly.)
-* Feature-packed
-    * Using the AMD format makes it easy for users to completely strip out
-      individual features' code, so class.js doesn't hold back.
-    * At the same time, class.js is **only** a classical inheritance library.
-      It contains no code that isn't directly related to that purpose (I'm
-      looking at [js.class](http://jsclass.jcoglan.com/) here).
-
-
 Usage
 -----
 
@@ -66,7 +33,7 @@ one to three arguments:
 * {String} [className]
   * the name of the class to display in debuggers
 * {...Constructor} [superclasses]
-  * any number of superclasses (previously output by `class/create`)
+  * any number of superclasses (which were output by `Class.extend`)
 * {Object} members
   * the "instance members" of the class
 
@@ -100,3 +67,36 @@ console.log(rect.left); //> 10
 console.log(rect.width); //> 50
 console.log(rect.height); //> 50
 ```
+
+
+Why?
+----
+
+This has been done before. There's the aforementioned
+[dojo/_base/declare](http://dojotoolkit.org/reference-guide/1.8/dojo/_base/declare.html#dojo-base-declare),
+[js.class](http://jsclass.jcoglan.com/),
+[base.js](http://dean.edwards.name/weblog/2006/03/base/), and [John Resig's
+take on it](http://ejohn.org/blog/simple-javascript-inheritance/) to name a
+few. Here's what characterizes class.js:
+
+* Familiar
+    * Tries to resemble C++, Java, and C# because of their
+      [popularity](http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html)
+      and syntactic similarity to JavaScript.
+    * At the same time, tries not to stray too far from JavaScript norms. That
+      is, class definitions should resemble the common pattern of using a
+      `mixin` or `extend` method on the prototype object. For example, class.js
+      won't use string parsing to enable "public", "private", "protected"
+      and/or "static" distinctions.
+* Hackable
+    * Kept as modular as possible to aid readability and facilitate overriding
+      specific functionality
+    * Emphasizes imperative rather than declarative style in library code
+      (specifically with "plugins", actually call the damn function rather the
+      "registering" it with something. No "magic", debugger-friendly.)
+* Feature-packed
+    * Using the AMD format makes it easy for users to completely strip out
+      individual features' code, so class.js doesn't hold back.
+    * At the same time, class.js is **only** a classical inheritance library.
+      It contains no code that isn't directly related to that purpose (I'm
+      looking at [js.class](http://jsclass.jcoglan.com/) here).
