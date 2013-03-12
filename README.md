@@ -15,10 +15,11 @@ but designed to be customizable. Here are its default (most are optional!) featu
 * [ES5 Properties (Getters/Setters)](https://github.com/zship/class.js/wiki/Plugins%3A-props)
 * [AOP-style method chaining](https://github.com/zship/class.js/wiki/Plugins%3A-chain)
 * [clone() method](https://github.com/zship/class.js/wiki/Plugins%3A-clone)
-* Sets class names to be able to display in all debuggers
-* Guesses class names from source
-* Compatible with consumer code using [ES5 Strict
+* Compatible with consumer code which uses [ES5 Strict
   mode](https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Functions_and_function_scope/Strict_mode)
+* Debugging: Guesses class names from source
+* Debugging: Class names can display in all debuggers
+* Debugging: Sets the [displayName](http://www.alertdebugging.com/2009/04/29/building-a-better-javascript-profiler-with-webkit/) property for browsers which support it
 
 
 Why?
@@ -47,8 +48,11 @@ few. Here's what characterizes class.js:
       (specifically with "plugins", actually call the damn function rather the
       "registering" it with something. No "magic", debugger-friendly.)
 * Feature-packed
-    * Using the AMD format makes it really easy for users to turn off features
-      and completely strip out their code, so class.js doesn't hold back.
+    * Using the AMD format makes it easy for users to completely strip out
+      individual features' code, so class.js doesn't hold back.
+    * At the same time, class.js is **only** a classical inheritance library.
+      It contains no code that isn't directly related to that purpose (I'm
+      looking at [js.class](http://jsclass.jcoglan.com/) here).
 
 
 
