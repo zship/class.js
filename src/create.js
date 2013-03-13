@@ -10,7 +10,7 @@ define(function(require) {
 		chain: require('./plugin/chain'),
 		clone: require('./plugin/clone'),
 		guessName: require('./plugin/guessName'),
-		_super: require('./plugin/super2'),
+		_super: require('./plugin/super'),
 		props: require('./plugin/props')
 	};
 

@@ -1,42 +1,42 @@
-/*jshint strict:false*/
 define(function(require) {
+
+	'use strict';
 
 	var forOwn = require('mout/object/forOwn');
 	var filter = require('mout/object/filter');
 	var isFunction = require('mout/lang/isFunction');
 
 
-	var superMethod = function() {
-		var curr = this._super.curr;
-		if (!curr) {
-			curr = this._super.curr = {};
-			//keep a pointer to which base class we're operating on, so that
-			//upstream _super calls are directed to methods progressively
-			//higher in the chain
-			curr.pos = 0;
-			//Function.caller is expensive. We can cache it across _super calls
-			//within the same function chain (same-named)
-			curr.key = superMethod.caller.nom;
-		}
+	//implements a classical-oop "super" method
+	//super2 is a version which allows client code to run in es5 "strict mode"
+	var superMethod = function(superList, key) {
+		//keep a pointer to which base class we're operating on, so that
+		//upstream _super calls are directed to methods progressively
+		//higher in the chain
+		var superPointer = 0;
 
-		var list = this.constructor._meta.superList;
-		curr.fn = list[curr.key] && list[curr.key][curr.pos];
-		curr.pos++;
+		var ret = function() {
+			var superFn = superList[superPointer];
+			superPointer++;
 
-		if (!curr.fn) {
-			var className = this.constructor._meta.name;
-			var err = className + '#' + curr.key + ': no method by this name in superclasses (';
-			err += [className].concat(
-				this.constructor._meta.bases.map(function(base) {
-					return base._meta.name;
-				})
-			).join(' > ');
-			err += ')';
-			throw new Error(err);
-		}
+			if (!superFn) {
+				var className = this.constructor._meta.name;
+				var err = className + '#' + key + ': no method by this name in superclasses (';
+				err += [className].concat(
+					this.constructor._meta.bases.map(function(base) {
+						return base._meta.name;
+					})
+				).join(' > ');
+				err += ')';
+				throw new Error(err);
+			}
 
-		var ret = curr.fn.apply(this, arguments);
-		this._super.curr = null;
+			var ret = superFn.apply(this, arguments);
+			superPointer = 0;
+			return ret;
+		};
+
+		ret.nom = key;
 		return ret;
 	};
 
@@ -45,22 +45,26 @@ define(function(require) {
 		var meta = constructor._meta;
 		var proto = constructor.prototype;
 
-		//cache of which base methods should be used for each _super method,
-		//and in what order
-		meta.superList = {};
+		meta.superCache = {};
 
 		forOwn(filter(meta.members, isFunction), function(member, key) {
-			proto[key].nom = key;
-			meta.superList[key] = meta.bases
+			var superList = meta.bases
 				.filter(function(base) {
 					return base._meta.members.hasOwnProperty(key);
 				})
 				.map(function(base) {
 					return base._meta.members[key];
 				});
-		});
 
-		proto._super = superMethod;
+			meta.superCache[key] = superMethod(superList, key);
+
+			proto[key] = function() {
+				if (!this._super || this._super.nom !== key) {
+					this._super = meta.superCache[key];
+				}
+				return member.apply(this, arguments);
+			};
+		});
 	};
 
 

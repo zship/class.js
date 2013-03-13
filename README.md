@@ -6,7 +6,7 @@ class.js
 class.js is a modular library (using AMD conventions) for simulating classical
 inheritance. It is modeled after
 [dojo/_base/declare](http://dojotoolkit.org/reference-guide/1.8/dojo/_base/declare.html#dojo-base-declare),
-but designed to be customizable. Here are its default (most are optional!) features:
+but designed to be customizable. Here are its default (most can be removed!) features:
 
 * Multiple inheritance
 * Optional usage of `new`
