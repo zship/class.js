@@ -17,7 +17,7 @@ but designed to be customizable. Here are its default (most can be removed!) fea
 * [clone() method](https://github.com/zship/class.js/wiki/Plugins%3A-clone)
 * Compatible with consumer code which uses [ES5 Strict
   mode](https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Functions_and_function_scope/Strict_mode)
-* Debugging: Guesses class names from source
+* Debugging: [Guesses class names from source](https://github.com/zship/class.js/wiki/Plugins%3A-guessName)
 * Debugging: Class names can display in all debuggers
 * Debugging: Sets the [displayName](http://www.alertdebugging.com/2009/04/29/building-a-better-javascript-profiler-with-webkit/) property for browsers which support it
 
