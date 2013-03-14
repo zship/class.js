@@ -9,6 +9,7 @@ define(function(require) {
 		apply: require('./plugin/apply'),
 		chain: require('./plugin/chain'),
 		clone: require('./plugin/clone'),
+		displayName: require('./plugin/displayName'),
 		guessName: require('./plugin/guessName'),
 		_super: require('./plugin/super'),
 		props: require('./plugin/props')
@@ -16,7 +17,7 @@ define(function(require) {
 
 
 	//the actual constructor function (invoked with the `new` operator)
-	var ctorFn = function(meta) {
+	var realConstructor = function(meta) {
 		return function $Class(other) {
 			//signal minifiers to avoid mangling names in this eval'd scope
 			eval('');
@@ -71,7 +72,8 @@ define(function(require) {
 		/*
 		 * ----------------------------------------------------------------------
 		 * Step 2:
-		 * Augment the constructor's prototype object or `_meta` metadata
+		 * Augment the constructor's prototype object, possibly along with
+		 * `_meta` metadata
 		 * ----------------------------------------------------------------------
 		 */
 
@@ -93,20 +95,25 @@ define(function(require) {
 		//attempt to guess class name from source
 		plugin.guessName(constructor);
 
-		//initialize the `_data` member upon construction
+		//set the 'displayName' property on functions, for browsers which
+		//support it
+		plugin.displayName(constructor);
+
+		//initialize the `_data` member upon construction (realConstructor
+		//above)
 		meta.defaults = meta.members.__defaults || {};
 
 
 		/*
 		 * ----------------------------------------------------------------------
 		 * Step 3:
-		 * Replace the basic constructor
+		 * Replace the basic constructor with our plugin-modified one
 		 * ----------------------------------------------------------------------
 		 */
 
 		constructor = makeConstructor(
 			//see ctorFn() above for explanation of why eval() is used here
-			eval('1&&function ' + ctorFn(meta).toString().replace(/\$Class/g, meta.name).replace(/^function\s+/, '')),
+			eval('1&&function ' + realConstructor(meta).toString().replace(/\$Class/g, meta.name).replace(/^function\s+/, '')),
 			proto,
 			meta
 		);
