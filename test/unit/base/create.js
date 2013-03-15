@@ -2,7 +2,8 @@ define(function(require){
 
 	'use strict';
 
-	var create = require('create');
+
+	var create = require('base/create');
 
 
 	module('create');
@@ -22,8 +23,9 @@ define(function(require){
 		var a = new A();
 		strictEqual(a.constructor, A, 'new A().constructor === A');
 
-		a = A();
-		strictEqual(a.constructor, A, 'A().constructor === A');
+		throws(function() {
+			a = A();
+		}, 'A() without `new` throws an error');
 	});
 
 

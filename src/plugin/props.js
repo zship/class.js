@@ -2,6 +2,7 @@ define(function(require) {
 
 	'use strict';
 
+
 	var forOwn = require('mout/object/forOwn');
 	var isObject = require('mout/lang/isObject');
 	var merge = require('mout/object/merge');

@@ -2,7 +2,8 @@ define(function(require){
 
 	'use strict';
 
-	var create = require('create');
+
+	var create = require('base/create');
 
 
 	module('plugin/super');

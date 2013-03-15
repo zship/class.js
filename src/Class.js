@@ -2,11 +2,12 @@ define(function(require) {
 
 	'use strict';
 
-	var create = require('./create');
+
+	var create = require('./base/create');
 
 
 	var Class = create(/** @lends Class.prototype */{
-		
+
 		__chains: {
 			destroy: 'before'
 		},
@@ -24,16 +25,5 @@ define(function(require) {
 
 
 	return Class;
-
-
-	/**
-	 * @name Class.extend
-	 * @description Convenience shortcut for {joss/oop/Classes.create}
-	 * @method
-	 * @param {String} [className]
-	 * @param {...joss/oop/Class} [superclasses]
-	 * @param {Object} members
-	 * @return {Constructor}
-	 */
 
 });

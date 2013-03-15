@@ -2,17 +2,16 @@
 define(function(require) {
 
 	var basicCreate = require('./basicCreate');
-	var makeConstructor = require('./util/makeConstructor');
-	var forceNew = require('./util/forceNew');
-	var defaults = require('./util/defaults');
+	var makeConstructor = require('./makeConstructor');
+	var defaults = require('../util/defaults');
 	var plugin = {
-		apply: require('./plugin/apply'),
-		chain: require('./plugin/chain'),
-		clone: require('./plugin/clone'),
-		displayName: require('./plugin/displayName'),
-		guessName: require('./plugin/guessName'),
-		_super: require('./plugin/super'),
-		props: require('./plugin/props')
+		apply: require('../plugin/apply'),
+		chain: require('../plugin/chain'),
+		clone: require('../plugin/clone'),
+		displayName: require('../plugin/displayName'),
+		guessName: require('../plugin/guessName'),
+		_super: require('../plugin/super'),
+		props: require('../plugin/props')
 	};
 
 
@@ -22,15 +21,12 @@ define(function(require) {
 			//signal minifiers to avoid mangling names in this eval'd scope
 			eval('');
 
-			//this following is eval'd from class/create, in order
+			//the following is eval'd from class/create, in order
 			//to override the constructor name given in common debuggers
 			//more: http://stackoverflow.com/questions/8073055/minor-drawback-with-crockford-prototypical-inheritance/8076515
-		
-			if(!(this instanceof $Class)){
-				// not called via new, so force it
-				var instance = forceNew($Class);
-				$Class.apply(instance, arguments);
-				return instance;
+			
+			if (Object.getPrototypeOf(this) !== $Class.prototype) {
+				throw new Error(meta.name + ' constructor was called without the "new" keyword');
 			}
 
 			//copy constructor for instances of this or any superclasses

@@ -2,9 +2,8 @@ define(function(require){
 
 	'use strict';
 
-	var create = require('create');
-	var Class = require('Class');
-	var guessClassName = require('plugin/guessName');
+
+	var create = require('base/create');
 
 
 	module('plugin/guessName');

@@ -9,8 +9,8 @@ inheritance. It is modeled after
 but designed to be customizable. Here are its default (most can be removed!) features:
 
 * Multiple inheritance
-* Optional usage of `new`
-* Copy constructor
+* [Forced usage of `new`](https://github.com/zship/class.js/wiki/The-Default-Constructor-Function)
+* [Copy constructor](https://github.com/zship/class.js/wiki/The-Default-Constructor-Function)
 * [super() method](https://github.com/zship/class.js/wiki/Plugins%3A-super)
 * [ES5 Properties (Getters/Setters)](https://github.com/zship/class.js/wiki/Plugins%3A-props)
 * [AOP-style method chaining](https://github.com/zship/class.js/wiki/Plugins%3A-chain)
@@ -18,7 +18,7 @@ but designed to be customizable. Here are its default (most can be removed!) fea
 * Compatible with consumer code which uses [ES5 Strict
   mode](https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Functions_and_function_scope/Strict_mode)
 * Debugging: [Guesses class names from source](https://github.com/zship/class.js/wiki/Plugins%3A-guessName)
-* Debugging: Class names can display in all debuggers
+* Debugging: [Class names can display in all debuggers](https://github.com/zship/class.js/wiki/The-Default-Constructor-Function)
 * Debugging: Sets the [displayName](http://www.alertdebugging.com/2009/04/29/building-a-better-javascript-profiler-with-webkit/) property for browsers which support it
 
 

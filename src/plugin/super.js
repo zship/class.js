@@ -2,6 +2,7 @@ define(function(require) {
 
 	'use strict';
 
+
 	var forOwn = require('mout/object/forOwn');
 	var filter = require('mout/object/filter');
 	var isFunction = require('mout/lang/isFunction');

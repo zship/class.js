@@ -2,6 +2,7 @@ define(function() {
 
 	'use strict';
 
+
 	/**
 	 * Determine if an object is a jQuery element or a DOM element.
 	 * @param {Any} obj

@@ -2,7 +2,7 @@ define(function(require) {
 
 	'use strict';
 
-	var forceNew = require('../util/forceNew');
+
 	var isElement = require('../util/isElement');
 	var forOwn = require('mout/object/forOwn');
 	var kindOf = require('mout/lang/kindOf');
@@ -85,7 +85,7 @@ define(function(require) {
 		var proto = constructor.prototype;
 
 		proto.clone = function() {
-			var ret = forceNew(this.constructor);
+			var ret = Object.create( Object.getPrototypeOf(this) );
 			forOwn(this, function(val, key) {
 				ret[key] = clone(val);
 			});
