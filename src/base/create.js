@@ -9,6 +9,7 @@ define(function(require) {
 		chain: require('../plugin/chain'),
 		clone: require('../plugin/clone'),
 		displayName: require('../plugin/displayName'),
+		equals: require('../plugin/equals'),
 		guessName: require('../plugin/guessName'),
 		_super: require('../plugin/super'),
 		props: require('../plugin/props')
@@ -84,6 +85,9 @@ define(function(require) {
 
 		//AOP-style 'after' or 'before' method chaining
 		plugin.chain(constructor);
+
+		//Java-style 'equals' method
+		plugin.equals(constructor);
 
 		//ES5 properties for members like {get: fn, set: fn}
 		plugin.props(constructor);
