@@ -37,8 +37,8 @@
     <script>
       require(
        [
+    "lib/es5-shim.js",
     "unit/Class.js",
-    "unit/base/create.js",
     "unit/base/methodResolutionOrder.js",
     "unit/plugin/chain.js",
     "unit/plugin/equals.js",
@@ -49,6 +49,7 @@
        function() {
         if (window.QUnit) {
          QUnit.start();
+         QUnit.config.notrycatch = true;
         }
         else if (window.jasmine) {
          var jasmineEnv = jasmine.getEnv();

@@ -15,7 +15,7 @@ define(function(require) {
 	 * @param {Object} members
 	 * @return {Constructor}
 	 */
-	var base = function() {
+	var basicCreate = function() {
 
 		var args = toArray(arguments);
 		var className;
@@ -134,6 +134,6 @@ define(function(require) {
 	};
 
 
-	return base;
+	return basicCreate;
 
 });

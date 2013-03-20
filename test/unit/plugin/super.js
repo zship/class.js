@@ -3,7 +3,7 @@ define(function(require){
 	'use strict';
 
 
-	var create = require('base/create');
+	var Class = require('Class');
 
 
 	module('plugin/super');
@@ -12,20 +12,20 @@ define(function(require){
 	test('_super', function() {
 		//in AOP "before" order
 		var called = [];
-		var A = create({
+		var A = Class.extend({
 			start: function() {
 				called.push('A');
 			}
 		});
 
-		var B = create(A, {
+		var B = A.extend({
 			start: function() {
 				this._super();
 				called.push('B');
 			}
 		});
 
-		var C = create(B, {
+		var C = B.extend({
 			start: function() {
 				this._super();
 				called.push('C');
@@ -40,20 +40,20 @@ define(function(require){
 
 		//in AOP "after" order
 		called = [];
-		A = create({
+		A = Class.extend({
 			start: function() {
 				called.push('A');
 			}
 		});
 
-		B = create(A, {
+		B = A.extend({
 			start: function() {
 				called.push('B');
 				this._super();
 			}
 		});
 
-		C = create(B, {
+		C = B.extend({
 			start: function() {
 				called.push('C');
 				this._super();
@@ -69,20 +69,20 @@ define(function(require){
 
 
 		called = [];
-		A = create({
+		A = Class.extend({
 			start: function() {
 				called.push('A');
 			}
 		});
 
-		B = create(A, {
+		B = A.extend({
 			start: function() {
 				called.push('B');
 				this._super();
 			}
 		});
 
-		C = create(B, {
+		C = B.extend({
 			start: function() {
 				//called.push('C');
 				this._super();
@@ -102,15 +102,15 @@ define(function(require){
 
 		//missing a link in the chain
 		called = [];
-		A = create({
+		A = Class.extend({
 			start: function() {
 				called.push('A');
 			}
 		});
 
-		B = create(A, {});
+		B = A.extend({});
 
-		C = create(B, {
+		C = B.extend({
 			start: function() {
 				called.push('C');
 				this._super();
@@ -124,20 +124,20 @@ define(function(require){
 
 
 		//returning values from _super()
-		A = create({
+		A = Class.extend({
 			start: function() {
 				return 'A1';
 			}
 		});
 
-		B = create(A, {
+		B = A.extend({
 			start: function() {
 				var ret = this._super();
 				return ret + ' B2';
 			}
 		});
 
-		C = create(B, {
+		C = B.extend({
 			start: function() {
 				var ret = this._super();
 				return ret + ' C3';
@@ -151,19 +151,19 @@ define(function(require){
 
 
 		//passing args to _super()
-		A = create({
+		A = Class.extend({
 			start: function(arg) {
 				return 'A' + arg;
 			}
 		});
 
-		B = create(A, {
+		B = A.extend({
 			start: function(arg) {
 				return this._super('B' + arg);
 			}
 		});
 
-		C = create(B, {
+		C = B.extend({
 			start: function() {
 				return this._super('C');
 			}

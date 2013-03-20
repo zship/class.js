@@ -3,36 +3,36 @@ define(function(require){
 	'use strict';
 
 
-	var create = require('base/create');
+	var Class = require('Class');
 
 
 	module('plugin/guessName');
 
 
 	test('Guessing class names from source', function() {
-		var A = create({});
-		strictEqual(A._meta.name, 'A', 'var A = create... - guessed "A"');
+		var A = Class.extend({});
+		strictEqual(A._meta.name, 'A', 'var A = Class.extend... - guessed "A"');
 
-		var B= create({});
-		strictEqual(B._meta.name, 'B', 'var B= create... - guessed "B"');
+		var B= Class.extend({});
+		strictEqual(B._meta.name, 'B', 'var B= Class.extend... - guessed "B"');
 
-		var C=create({});
-		strictEqual(C._meta.name, 'C', 'var C=create... - guessed "C"');
+		var C=Class.extend({});
+		strictEqual(C._meta.name, 'C', 'var C=Class.extend... - guessed "C"');
 
 		//throw one we won't detect into the mix
 		var O = (function() {
-			return create({});
+			return Class.extend({});
 		})();
 
-		strictEqual(O._meta.name, undefined, 'var O=(function(){ return create... })() - not guessed');
+		strictEqual(O._meta.name, undefined, 'var O=(function(){ return Class.extend... })() - not guessed');
 
 		//throw an explicitly-defined one into the mix
-		var P = create('P', {});
-		strictEqual(P._meta.name, 'P', 'var P = create("P",... - explicitly defined, so not guessed');
+		var P = Class.extend('P', {});
+		strictEqual(P._meta.name, 'P', 'var P = Class.extend("P",... - explicitly defined, so not guessed');
 
 		var D;
-		D = create({});
-		strictEqual(D._meta.name, 'D', 'var D; <line break> D = create... - guessed "D"');
+		D = Class.extend({});
+		strictEqual(D._meta.name, 'D', 'var D; <line break> D = Class.extend... - guessed "D"');
 
 		var E = A.extend({});
 		strictEqual(E._meta.name, 'E', 'var E = A.extend... - guessed "E"');

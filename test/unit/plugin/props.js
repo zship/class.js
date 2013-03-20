@@ -3,14 +3,14 @@ define(function(require){
 	'use strict';
 
 
-	var create = require('base/create');
+	var Class = require('Class');
 
 
 	module('plugin/props');
 
 
 	test('Generated Accessors', function() {
-		var Class = create({
+		var A = Class.extend({
 			constructor: function() {
 				this._data = {
 					a: 1,
@@ -24,11 +24,11 @@ define(function(require){
 			c: { get: null }
 		});
 
-		var keys = Object.getOwnPropertyNames(Class.prototype);
+		var keys = Object.getOwnPropertyNames(A.prototype);
 		ok(keys.indexOf('a') !== -1, 'a is a property');
 		ok(keys.indexOf('b') !== -1, 'b is a property');
 
-		var obj = new Class();
+		var obj = new A();
 		strictEqual(obj.a, 1, 'getter a');
 		obj.a = 10;
 		strictEqual(obj.a, 10, 'setter a');
@@ -46,7 +46,7 @@ define(function(require){
 
 	test('Nested Accessors', function() {
 		var called = false;
-		var Class = create({
+		var A = Class.extend({
 			constructor: function() {
 				this._data = {
 					a: {
@@ -64,7 +64,7 @@ define(function(require){
 		});
 
 
-		var obj = new Class();
+		var obj = new A();
 		strictEqual(obj.a.b, 'init', 'initial a.b');
 
 		obj.a.b = 'foo';

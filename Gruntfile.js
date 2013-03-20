@@ -62,12 +62,20 @@ module.exports = function( grunt ) {
 
 		'amd-test': {
 			mode: 'qunit',
-			files: 'test/unit/**/*.js'
+			files: ['test/lib/es5-shim.js', 'test/unit/**/*.js']
 		},
 
 
 		qunit: {
-			all: ['test/runner.html']
+			all: {
+				files: {
+					src: 'test/runner.html'
+				},
+				options: {
+					'--web-security': false
+					//'--remote-debugger-port': 9222
+				}
+			}
 		},
 
 

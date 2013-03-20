@@ -1,6 +1,8 @@
 /*jshint evil:true, strict:false */
 define(function(require) {
 
+	var toArray = require('mout/lang/toArray');
+	var isString = require('mout/lang/isString');
 	var basicCreate = require('./basicCreate');
 	var makeConstructor = require('./makeConstructor');
 	var defaults = require('../util/defaults');
@@ -126,7 +128,18 @@ define(function(require) {
 		 * ----------------------------------------------------------------------
 		 */
 
-		constructor.extend = create.bind(create, constructor);
+		constructor.extend = function() {
+			var args = toArray(arguments);
+
+			if (isString(args[0])) {
+				args.splice(1, 0, constructor);
+			}
+			else {
+				args.unshift(constructor);
+			}
+
+			return create.apply(create, args);
+		};
 
 		return constructor;
 

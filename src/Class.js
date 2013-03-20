@@ -6,7 +6,7 @@ define(function(require) {
 	var create = require('./base/create');
 
 
-	var Class = create(/** @lends Class.prototype */{
+	var Class = create('Class', /** @lends Class.prototype */{
 
 		__chains: {
 			destroy: 'before'

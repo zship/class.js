@@ -9,6 +9,11 @@ define(function(require) {
 	 * assigned to a variable, we use that name as the class name
 	 */
 	var guessName = function(constructor) {
+		//name manually specified
+		if (constructor._meta.name) {
+			return;
+		}
+
 		var trace = new stacktrace.implementation();
 		var stack = trace.run(null);
 
@@ -25,13 +30,8 @@ define(function(require) {
 			return;
 		}
 
-		var declarationPos = guessNamePos + 2;
-		var parts = stack[declarationPos].match(/^.*?\((.*?)(?::(\d+))(?::(\d+))/);
-
-		if (!parts) {
-			parts = stack[declarationPos].match(/^\s*at\s*(.*?)(?::(\d+))(?::(\d+))$/);
-		}
-
+		var declarationPos = guessNamePos + 3;
+		var parts = stack[declarationPos].match(/^.*?((?:file|http|https):\/\/.*?\/.*?)(?::(\d+)).*/);
 		var file = parts[1];
 		var source = trace.getSource(file);
 
@@ -42,16 +42,9 @@ define(function(require) {
 		var lineno = parts[2];
 		var line = source[lineno - 1];
 
-		//e.g. var (name) = create({...
-		var rClassCreate = /^\s*?(?:var)?\s*?(\S+?)\s*?=\s*?create/;
 		//e.g. var (name) = (Superclass).extend({...
 		var rClassExtend = /^\s*?(?:var)?\s*?(\S+?)\s*?=\s*?(\S+?)\.extend/;
-
-		var matches = line.match(rClassCreate);
-
-		if (!matches) {
-			matches = line.match(rClassExtend);
-		}
+		var matches = line.match(rClassExtend);
 
 		if (!matches) {
 			return;

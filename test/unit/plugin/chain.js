@@ -3,7 +3,7 @@ define(function(require){
 	'use strict';
 
 
-	var create = require('base/create');
+	var Class = require('Class');
 	var Deferred = require('deferreds/Deferred');
 
 
@@ -16,7 +16,7 @@ define(function(require){
 		var startCompleted = false;
 		var stopCompleted = false;
 
-		var A = create({
+		var A = Class.extend({
 			__chains: {
 				start: 'after',
 				stop: 'before'
@@ -43,7 +43,7 @@ define(function(require){
 			}
 		});
 
-		var B = create(A, {
+		var B = A.extend({
 			constructor: function() {
 				this._super();
 				this.contextTestB = 'B';
@@ -80,7 +80,7 @@ define(function(require){
 	asyncTest('Chaining with missing link', function() {
 		var startCalled = [];
 
-		var A = create({
+		var A = Class.extend({
 			__chains: {
 				start: 'after'
 			},

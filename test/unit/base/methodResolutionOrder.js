@@ -3,7 +3,7 @@ define(function(require){
 	'use strict';
 
 
-	var create = require('base/create');
+	var Class = require('Class');
 
 
 	module('methodResolutionOrder');
@@ -18,23 +18,23 @@ define(function(require){
 
 
 	test('Inheritance', function() {
-		var A = create({});
-		var B = create(A, {});
-		var C = create(B, {});
+		var A = Class.extend({});
+		var B = A.extend({});
+		var C = B.extend({});
 
-		strictEqual(lin(C), 'B A', 'single inheritance');
+		strictEqual(lin(C), 'B A Class', 'single inheritance');
 
-		A = create({});
-		B = create({});
-		C = create(B, A, {});
+		A = Class.extend({});
+		B = Class.extend({});
+		C = B.extend(A, {});
 
-		strictEqual(lin(C), 'B A', 'multiple inheritance');
+		strictEqual(lin(C), 'B A Class', 'multiple inheritance');
 
-		A = create({});
-		B = create({});
-		C = create(A, B, {});
+		A = Class.extend({});
+		B = Class.extend({});
+		C = A.extend(B, {});
 
-		strictEqual(lin(C), 'A B', 'multiple inheritance 2');
+		strictEqual(lin(C), 'A B Class', 'multiple inheritance 2');
 
 		//more complex: from http://www.python.org/download/releases/2.3/mro/
 		/*
@@ -59,17 +59,17 @@ define(function(require){
          Level 0                 0 | A |                (more specialized)
                                     ---
 		*/
-		var O = create({});
-		var F = create(O, {});
-		var E = create(O, {});
-		var D = create(O, {});
-		C = create(D, F, {});
-		B = create(D, E, {});
-		A = create(B, C, {});
+		var O = Class.extend({});
+		var F = O.extend({});
+		var E = O.extend({});
+		var D = O.extend({});
+		C = D.extend(F, {});
+		B = D.extend(E, {});
+		A = B.extend(C, {});
 
-		strictEqual(lin(B), 'D E O', 'complex multiple inheritance 1');
-		strictEqual(lin(C), 'D F O', 'complex multiple inheritance 2');
-		strictEqual(lin(A), 'B C D E F O', 'complex multiple inheritance 3');
+		strictEqual(lin(B), 'D E O Class', 'complex multiple inheritance 1');
+		strictEqual(lin(C), 'D F O Class', 'complex multiple inheritance 2');
+		strictEqual(lin(A), 'B C D E F O Class', 'complex multiple inheritance 3');
 	});
 
 });
