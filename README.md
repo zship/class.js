@@ -100,3 +100,18 @@ few. Here's what characterizes class.js:
     * At the same time, class.js is **only** a classical inheritance library.
       It contains no code that isn't directly related to that purpose (I'm
       looking at [js.class](http://jsclass.jcoglan.com/) here).
+
+
+Versioning
+----------
+
+Version numbering is primarily defined in package.json and adheres to the
+[Semantic Versioning
+Specification](https://github.com/mojombo/semver/blob/master/semver.md).
+
+
+License
+-------
+
+Released under the [MIT
+License](http://www.opensource.org/licenses/mit-license.php).
