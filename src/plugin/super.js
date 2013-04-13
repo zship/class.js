@@ -42,6 +42,11 @@ define(function(require) {
 	};
 
 
+	var superNoop = function() {
+		throw new Error('super must be called within a class method');
+	};
+
+
 	var makeSuper = function(constructor) {
 		var meta = constructor._meta;
 		var proto = constructor.prototype;
@@ -63,7 +68,9 @@ define(function(require) {
 				if (!this._super || this._super.nom !== key) {
 					this._super = meta.superCache[key];
 				}
-				return member.apply(this, arguments);
+				var ret = member.apply(this, arguments);
+				this._super = superNoop;
+				return ret;
 			};
 		});
 	};

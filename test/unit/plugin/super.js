@@ -66,40 +66,6 @@ define(function(require){
 		strictEqual(called.join(' '), 'C B A', '_start called after: methods called in correct order');
 
 
-
-
-		called = [];
-		A = Class.extend({
-			start: function() {
-				called.push('A');
-			}
-		});
-
-		B = A.extend({
-			start: function() {
-				called.push('B');
-				this._super();
-			}
-		});
-
-		C = B.extend({
-			start: function() {
-				//called.push('C');
-				this._super();
-			}
-		});
-
-		c = new C();
-		var start, end;
-		start = new Date().getTime();
-		for (var i = 0; i < 1000000; i++) {
-			c.start();
-		}
-		end = new Date().getTime();
-		console.log('super 1:' + (end - start));
-
-
-
 		//missing a link in the chain
 		called = [];
 		A = Class.extend({
@@ -173,6 +139,12 @@ define(function(require){
 		ret = c.start();
 
 		strictEqual(ret, 'ABC', 'passing arguments to _super');
+
+
+		//calling super outside of a method
+		throws(function() {
+			c._super();
+		}, 'calling super outside of a class method throws an error');
 	});
 
 });
